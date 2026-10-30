@@ -1,0 +1,23 @@
+# Secrets
+.env
+credentials.json
+token.json
+client_secret*.json
+
+# Laufzeit-Daten
+temp/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editor / OS
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.DS_Store
+Thumbs.db
