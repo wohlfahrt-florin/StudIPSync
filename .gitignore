@@ -6,6 +6,7 @@ client_secret*.json
 
 # Laufzeit-Daten
 temp/
+sync_state.json
 *.log
 
 # Python

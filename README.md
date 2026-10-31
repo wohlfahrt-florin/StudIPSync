@@ -1,39 +1,55 @@
 # StudIPSync
 
-Synchronisiert Dateien aus meinen Stud.IP-Kursen (MLU Halle) automatisch in einen Google-Drive-Ordner – ein Unterordner pro Kurs.
+Synchronisiert neue Dateien aus den Stud.IP-Kursen der MLU Halle in einen
+Google-Drive-Ordner – ein Unterordner pro Kurs.
 
-> Status: **in Entwicklung** – Login & API werden noch getestet.
-> Ausführliche Doku, Debugging-Logs und Tests liegen in Obsidian (`StudIPSync/`).
+> Richtung: **Stud.IP → Google Drive**. Änderungen im Google Drive werden nicht
+> nach Stud.IP zurückgeschrieben.
 
 ## Dateien
 
 | Datei | Zweck |
 |---|---|
-| `studipsync.py` | Hauptskript: Login → Kurse finden → Dateien laden → Drive-Upload |
-| `test.py` | Debug-Skript für den Cookie-/Formular-Login |
-| `StudIP_API_Test.py` | Test der Stud.IP JSON:API (`/jsonapi.php/v1`) |
-| `.env.example` | Vorlage für Zugangsdaten (wird zu `.env`) |
-| `credentials.json` / `token.json` | Google-OAuth – **nicht im Repo** (siehe `.gitignore`) |
+| `studipsync.py` | Einstiegspunkt und Ablaufsteuerung der Synchronisation |
+| `studip_client.py` | Authentifizierter Zugriff auf die Stud.IP-JSON-API |
+| `drive_client.py` | Google-OAuth, Kursordner und Uploads |
+| `sync_state.py` | Status bereits hochgeladener Stud.IP-Dateien |
+| `StudIP_API_Test.py` | Test der Stud.IP-JSON-API und Ausgabe der Kurse |
+| `sync_paths.py` | Sichere lokale Pfade für Kurse und Dateien |
+| `test_studipsync.py` | Tests für die Pfadfunktionen |
+| `.env.example` | Vorlage für Zugangsdaten und Drive-Zielordner |
+| `credentials.json` / `token.json` | Google-OAuth – nicht ins Repository legen |
+| `sync_state.json` | Lokaler Status bereits hochgeladener Stud.IP-Dateien |
 
 ## Setup
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\activate
+\.venv\Scripts\activate
 pip install -r requirements.txt
-copy .env.example .env      # danach .env ausfüllen
+copy .env.example .env
 ```
 
-`credentials.json` aus der Google Cloud Console (OAuth-Client „Desktop-App“, Drive API aktiviert) in diesen Ordner legen. Beim ersten Start öffnet sich der Browser, danach wird `token.json` wiederverwendet.
+Danach `.env` ausfüllen und `credentials.json` aus der Google Cloud Console
+(OAuth-Client „Desktop-App“, Drive API aktiviert) in den Projektordner legen.
+Beim ersten Start öffnet sich der Browser für die Google-Anmeldung; danach wird
+`token.json` wiederverwendet.
 
 ## Nutzung
 
 ```powershell
-python StudIP_API_Test.py   # 1. API-Zugang prüfen
-python test.py              # 2. Formular-Login prüfen
-python studipsync.py        # 3. Synchronisation
+\.venv\Scripts\python.exe .\StudIP_API_Test.py
+\.venv\Scripts\python.exe .\studipsync.py
 ```
+
+Die Synchronisation berücksichtigt die 22 Kurse, die das WiSe 2026/27
+überschneiden. Bereits hochgeladene Dateien werden über `sync_state.json`
+erkannt. Dateien im Drive werden weder gelöscht noch zurück nach Stud.IP
+übertragen.
+
+Für eine automatische Ausführung muss `studipsync.py` regelmäßig gestartet
+werden, zum Beispiel über die Windows-Aufgabenplanung.
 
 ## Sicherheit
 
-Zugangsdaten stehen ausschließlich in `.env`. `.env`, `credentials.json`, `token.json` und `temp/` sind per `.gitignore` ausgeschlossen.
+Zugangsdaten stehen ausschließlich in `.env`. `.env`, `credentials.json`,
+`token.json`, `sync_state.json` und `temp/` sind per `.gitignore` ausgeschlossen.

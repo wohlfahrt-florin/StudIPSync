@@ -1,110 +1,116 @@
+"""Programmstart und Ablaufsteuerung für StudIPSync.
+
+Die eigentliche Kommunikation ist in drei spezialisierte Module ausgelagert:
+
+* ``studip_client.py`` liest Kurse und Dateien aus der Stud.IP-JSON-API.
+* ``drive_client.py`` verwaltet Google-OAuth, Kursordner und Uploads.
+* ``sync_state.py`` merkt sich erfolgreich synchronisierte Dateien.
+
+Dieses Modul verbindet die drei Bausteine und legt die Synchronisationsrichtung
+fest: ausschließlich von Stud.IP nach Google Drive.
+"""
+
 import os
-import time
-import requests
+from pathlib import Path
+
 from dotenv import load_dotenv
 
-load_dotenv()
-from bs4 import BeautifulSoup
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.oauth2.credentials import Credentials
+from drive_client import DriveClient
+from studip_client import StudIPClient, TARGET_SEMESTER
+from sync_paths import temp_path_for
+from sync_state import SyncState
 
-# === KONFIGURATION ===
-BASE_URL = "https://studip.uni-halle.de"
-LOGIN_URL = f"{BASE_URL}/dispatch.php/login?again=yes"
-# Zugangsdaten kommen aus .env (siehe .env.example) – NIE im Code speichern
-USERNAME = os.environ["STUDIP_USER"]
-PASSWORD = os.environ["STUDIP_PASSWORD"]
 
-# === GOOGLE DRIVE AUTHENTIFIZIERUNG ===
-SCOPES = ["https://www.googleapis.com/auth/drive.file"]
+PROJECT_DIR = Path(__file__).resolve().parent
 
-from google.auth.transport.requests import Request
 
-def get_drive_credentials():
-    """Nutzt token.json wieder, statt bei jedem Start neu im Browser zu fragen."""
-    creds = None
-    if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-    if not creds or not creds.valid:
-        flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-        creds = flow.run_local_server(port=0)
-    with open("token.json", "w", encoding="utf-8") as token:
-        token.write(creds.to_json())
-    return creds
+def download_to_temp(studip, file_ref, course_name):
+    """Speichert eine Stud.IP-Datei im lokalen, kursbezogenen Zwischenspeicher.
 
-creds = get_drive_credentials()
+    Die File-Ref-ID wird dem lokalen Namen vorangestellt. So können zwei
+    gleichnamige Dateien aus verschiedenen Stud.IP-Unterordnern gleichzeitig
+    gespeichert werden, ohne sich gegenseitig zu überschreiben.
+    """
+    attributes = file_ref["attributes"]
+    local_name = f"{file_ref['id']}_{attributes['name']}"
+    local_path = Path(
+        temp_path_for(
+            course_name,
+            local_name,
+            temp_root=str(PROJECT_DIR / "temp"),
+        )
+    )
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+    local_path.write_bytes(studip.download_file(file_ref))
+    return local_path
 
-drive = build("drive", "v3", credentials=creds)
 
-# === FUNKTIONEN ===
-def ensure_drive_folder(name, parent_id):
-    """Erstellt einen Ordner auf Google Drive, falls er nicht existiert."""
-    query = f"name='{name}' and '{parent_id}' in parents and mimeType='application/vnd.google-apps.folder'"
-    res = drive.files().list(q=query).execute().get("files", [])
-    if res:
-        return res[0]["id"]
-    folder = drive.files().create(
-        body={"name": name, "mimeType": "application/vnd.google-apps.folder", "parents": [parent_id]}
-    ).execute()
-    return folder["id"]
+def synchronize():
+    """Führt eine vollständige, einseitige Synchronisationsrunde aus.
 
-def upload_to_drive(local_path, filename, parent_id):
-    """Lädt eine Datei in den angegebenen Drive-Ordner hoch."""
-    drive.files().create(
-        body={"name": filename, "parents": [parent_id]},
-        media_body=local_path
-    ).execute()
+    Für jede neue Stud.IP-Datei gilt die Reihenfolge:
 
-# === LOGIN BEI STUD.IP ===
-session = requests.Session()
-login_soup = BeautifulSoup(session.get(LOGIN_URL).text, "html.parser")
+    1. Datei-Referenzen aus Stud.IP lesen.
+    2. Datei nach ``temp/`` herunterladen.
+    3. Datei in den passenden Google-Drive-Kursordner hochladen.
+    4. Erst nach einem erfolgreichen Upload den Status speichern.
 
-def hidden(name):
-    field = login_soup.find("input", {"name": name})
-    return field["value"] if field else ""
+    Es gibt absichtlich keinen Zugriff, der Dateien im Drive löscht oder nach
+    Stud.IP zurückschreibt.
+    """
+    load_dotenv(PROJECT_DIR / ".env")
+    username = os.environ["STUDIP_USER"]
+    password = os.environ["STUDIP_PASSWORD"]
+    root_folder_id = os.environ["DRIVE_ROOT_FOLDER_ID"]
 
-resp = session.post(LOGIN_URL, data={
-    "loginname": USERNAME,
-    "password": PASSWORD,
-    "login_ticket": hidden("login_ticket"),
-    "security_token": hidden("security_token"),
-    "resolution": "",
-})
-if 'name="loginname"' in resp.text:
-    raise SystemExit("Login fehlgeschlagen – siehe Obsidian: StudIPSync/Login-Debugging")
+    studip = StudIPClient(username, password)
+    user = studip.current_user()
+    courses = studip.semester_courses(user["id"], TARGET_SEMESTER)
+    print(f"{len(courses)} Kurse im {TARGET_SEMESTER} gefunden.")
 
-# === KURSE AUTOMATISCH ERKENNEN ===
-r = session.get(f"{BASE_URL}/dispatch.php/start")
-soup = BeautifulSoup(r.text, "html.parser")
-courses = {a.text.strip(): a["href"].split("to=")[1] for a in soup.select("a[href*='course/go?to=']")}
+    drive = DriveClient(PROJECT_DIR, root_folder_id)
+    state = SyncState(PROJECT_DIR / "sync_state.json")
 
-# === HAUPTORDNER AUF GOOGLE DRIVE FINDEN ===
-root_folder_id = os.environ["DRIVE_ROOT_FOLDER_ID"]
+    for course_id, course_name in courses:
+        print(f"Kurs: {course_name}")
+        drive_folder_id = drive.ensure_course_folder(course_name)
 
-# === DATEIEN SYNCHRONISIEREN ===
-os.makedirs("temp", exist_ok=True)
+        for file_ref in studip.file_refs(course_id):
+            attributes = file_ref["attributes"]
+            if not attributes.get("is-downloadable", True):
+                continue
 
-for course_name, cid in courses.items():
-    print(f"🔍 Kurs: {course_name}")
-    course_folder_id = ensure_drive_folder(course_name, root_folder_id)
-    files_url = f"{BASE_URL}/plugins.php/courseware/courseware?cid={cid}"
-    r = session.get(files_url)
-    soup = BeautifulSoup(r.text, "html.parser")
+            # Die Kombination aus Kurs-ID und File-Ref-ID bleibt stabil, auch
+            # wenn sich der sichtbare Dateiname in Stud.IP ändert.
+            state_key = f"{course_id}:{file_ref['id']}"
+            if state.contains(state_key):
+                continue
 
-    for link in soup.select("a[href*='sendfile.php']"):
-        file_url = BASE_URL + link["href"]
-        filename = link.text.strip()
-        local_path = os.path.join("temp", filename)
+            local_path = download_to_temp(studip, file_ref, course_name)
+            drive_file_id = drive.upload(
+                str(local_path),
+                attributes["name"],
+                attributes.get("mime-type", "application/octet-stream"),
+                drive_folder_id,
+            )
 
-        if not os.path.exists(local_path):
-            print(f"📥 Lade {filename} herunter …")
-            with open(local_path, "wb") as f:
-                f.write(session.get(file_url).content)
-            upload_to_drive(local_path, filename, course_folder_id)
-            print(f"📤 {filename} → {course_name}")
-            time.sleep(1)
+            # Der Status wird erst hier gespeichert. Bei einem Fehler vorher
+            # wird die Datei beim nächsten täglichen Lauf erneut versucht.
+            state.remember(
+                state_key,
+                {
+                    "course_id": course_id,
+                    "course_name": course_name,
+                    "file_ref_id": file_ref["id"],
+                    "file_name": attributes["name"],
+                    "drive_file_id": drive_file_id,
+                    "studip_changed": attributes.get("chdate"),
+                },
+            )
+            print(f"  Neu: {attributes['name']}")
 
-print("✅ Synchronisation abgeschlossen.")
+    print("Synchronisation abgeschlossen. Richtung: Stud.IP -> Google Drive")
+
+
+if __name__ == "__main__":
+    synchronize()

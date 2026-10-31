@@ -1,32 +1,43 @@
+"""Einfacher Funktionstest der Stud.IP-JSON-API.
+
+Das Skript testet ausschließlich Stud.IP und Google Drive nicht. Es zeigt, ob
+die Zugangsdaten funktionieren und welche eigenen Kurse das WiSe 2026/27
+berühren. Die wiederverwendbare API-Logik liegt in ``studip_client.py``.
+"""
+
 import os
-import requests
+from pathlib import Path
+
 from dotenv import load_dotenv
 
-load_dotenv()
+from studip_client import StudIPClient, TARGET_SEMESTER
 
-# Die alte REST-API (api.php) liefert an der MLU 404.
-# Aktuell ist die JSON:API unter /jsonapi.php/v1 (Stand 10/2026).
-BASE_URL = "https://studip.uni-halle.de"
-API = f"{BASE_URL}/jsonapi.php/v1"
-USERNAME = os.environ["STUDIP_USER"]
-PASSWORD = os.environ["STUDIP_PASSWORD"]
 
-session = requests.Session()
-session.auth = (USERNAME, PASSWORD)  # HTTP Basic Auth
+PROJECT_DIR = Path(__file__).resolve().parent
 
-# 1) Wer bin ich? (ohne Login: 401)
-r = session.get(f"{API}/users/me")
-print("users/me:", r.status_code)
-if r.status_code != 200:
-    print(r.text[:500])
-    raise SystemExit("Basic Auth abgelehnt – siehe Obsidian: StudIPSync/API-Tests")
 
-user_id = r.json()["data"]["id"]
-print("User-ID:", user_id)
+def main():
+    """Meldet sich an und gibt die gefilterten Stud.IP-Kurse aus."""
+    # Der Pfad ist unabhängig vom aktuellen Terminalordner. Dadurch kann der
+    # Test auch über einen absoluten Dateipfad gestartet werden.
+    load_dotenv(PROJECT_DIR / ".env")
 
-# 2) Eigene Kurse
-r = session.get(f"{API}/users/{user_id}/course-memberships", params={"page[limit]": 100})
-print("course-memberships:", r.status_code)
-for m in r.json().get("data", []):
-    course = m["relationships"]["course"]["data"]["id"]
-    print(" - Kurs-ID:", course)
+    # Die Zugangsdaten bleiben im Quelltext und in der Terminalausgabe geheim.
+    username = os.environ["STUDIP_USER"]
+    password = os.environ["STUDIP_PASSWORD"]
+    studip = StudIPClient(username, password)
+
+    # ``users/me`` prüft gleichzeitig die Verbindung und die Authentifizierung.
+    user = studip.current_user()
+    print("users/me: 200")
+    print("User-ID:", user["id"])
+
+    # Die Kursfilterung erfolgt über den wiederverwendbaren Stud.IP-Client.
+    courses = studip.semester_courses(user["id"], TARGET_SEMESTER)
+    print(f"Kurse im {TARGET_SEMESTER}: {len(courses)}")
+    for course_id, course_name in courses:
+        print(f" - {course_name} (Kurs-ID: {course_id})")
+
+
+if __name__ == "__main__":
+    main()
