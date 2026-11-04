@@ -3,93 +3,208 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="StudIPSync synchronisiert Kursdateien aus Stud.IP nach Google Drive.">
-  <title>StudIPSync – Stud.IP mit Google Drive synchronisieren</title>
+  <meta name="description" content="StudIPSync synchronisiert neue Kursdateien aus Stud.IP automatisch und übersichtlich nach Google Drive.">
+  <meta name="theme-color" content="#f7f8f5">
+  <title>StudIPSync – Kursdateien einfach synchronisieren</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+  <a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+
   <header class="site-header">
     <div class="container nav">
-      <a class="brand" href="/">StudIPSync</a>
+      <a class="brand" href="/" aria-label="StudIPSync Startseite">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M7 7h10M14 4l3 3-3 3M17 17H7M10 14l-3 3 3 3"/></svg>
+        </span>
+        StudIPSync
+      </a>
       <nav aria-label="Hauptnavigation">
         <a href="#funktionen">Funktionen</a>
-        <a href="#datenschutz">Datenschutz</a>
+        <a href="#ablauf">So geht’s</a>
+        <a href="#sicherheit">Sicherheit</a>
         <a class="button button-small" href="#download">Download</a>
       </nav>
     </div>
   </header>
 
-  <main>
+  <main id="inhalt">
     <section class="hero">
       <div class="container hero-grid">
-        <div>
-          <p class="eyebrow">Stud.IP → Google Drive</p>
-          <h1>Kursdateien automatisch dort speichern, wo du sie brauchst.</h1>
-          <p class="lead">StudIPSync lädt neue Dateien aus deinen Stud.IP-Kursen in übersichtliche Google-Drive-Ordner. Einmal einrichten, danach manuell oder täglich synchronisieren.</p>
+        <div class="hero-copy">
+          <div class="status-pill"><span></span>Für Windows entwickelt</div>
+          <h1>Deine Kursdateien.<br><em>Einfach an ihrem Platz.</em></h1>
+          <p class="lead">StudIPSync überträgt neue Dateien aus deinen Stud.IP-Kursen in Google Drive – sauber nach Kursen sortiert und ohne doppelte Uploads.</p>
           <div class="actions">
-            <a class="button" href="#download">Für Windows herunterladen</a>
-            <a class="text-link" href="#so-funktioniert-es">So funktioniert es <span aria-hidden="true">↓</span></a>
+            <a class="button" href="#download">
+              Zum Download
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10M11 6l4 4-4 4"/></svg>
+            </a>
+            <a class="text-link" href="#ablauf">So funktioniert es</a>
+          </div>
+          <div class="hero-notes" aria-label="Produktmerkmale">
+            <span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 10 3 3 7-7"/></svg>Lokal gespeichert</span>
+            <span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 10 3 3 7-7"/></svg>Keine Cloud dazwischen</span>
           </div>
         </div>
-        <div class="hero-card" aria-label="StudIPSync Zusammenfassung">
-          <div class="card-icon">↗</div>
-          <p class="card-label">Einseitige Synchronisierung</p>
-          <h2>Stud.IP nach Google Drive</h2>
-          <ul class="check-list">
-            <li>Neue Dateien erkennen</li>
-            <li>Kursordner automatisch anlegen</li>
-            <li>Bereits übertragene Dateien merken</li>
-          </ul>
+
+        <div class="product-visual" aria-label="Beispiel einer laufenden Synchronisierung">
+          <div class="visual-glow"></div>
+          <div class="app-window">
+            <div class="window-bar">
+              <div class="window-brand"><span class="mini-mark"></span>StudIPSync</div>
+              <div class="window-controls" aria-hidden="true"><span></span><span></span><span></span></div>
+            </div>
+            <div class="sync-route">
+              <div class="service-card">
+                <span class="service-icon studip-icon">S</span>
+                <span><small>Quelle</small><strong>Stud.IP</strong></span>
+              </div>
+              <div class="route-line"><span></span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M12 6l4 4-4 4"/></svg></div>
+              <div class="service-card">
+                <span class="service-icon drive-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8.2 4 3.8 6.5L8.2 17H4.4l3.8-6.5L6.3 7.2 8.2 4Zm4.5 0h3.8l3.8 6.5h-7.6L8.9 4h3.8Zm-.7 7.8h8.3l-1.9 3.3H10l2-3.3Z"/></svg>
+                </span>
+                <span><small>Ziel</small><strong>Google Drive</strong></span>
+              </div>
+            </div>
+            <div class="progress-card">
+              <div class="progress-head"><span>Synchronisierung</span><strong>Abgeschlossen</strong></div>
+              <div class="progress-track"><span></span></div>
+              <div class="file-list">
+                <div class="file-row"><span class="file-icon"><svg viewBox="0 0 20 20"><path d="M6 3h5l3 3v11H6V3Zm5 0v4h4"/></svg></span><span><strong>Vorlesungsfolien 08.pdf</strong><small>Marketing · 2,4 MB</small></span><span class="check"><svg viewBox="0 0 20 20"><path d="m5 10 3 3 7-7"/></svg></span></div>
+                <div class="file-row"><span class="file-icon"><svg viewBox="0 0 20 20"><path d="M6 3h5l3 3v11H6V3Zm5 0v4h4"/></svg></span><span><strong>Übungsblatt 05.pdf</strong><small>Statistik · 840 KB</small></span><span class="check"><svg viewBox="0 0 20 20"><path d="m5 10 3 3 7-7"/></svg></span></div>
+              </div>
+            </div>
+            <div class="sync-footer"><span><i></i>Alles aktuell</span><span>2 Dateien übertragen</span></div>
+          </div>
+          <div class="floating-badge">
+            <span class="floating-icon"><svg viewBox="0 0 20 20"><path d="M10 4v6l4 2M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/></svg></span>
+            <span><strong>Täglich automatisch</strong><small>Auch ohne offenen Browser</small></span>
+          </div>
         </div>
+      </div>
+    </section>
+
+    <section class="trust-strip" aria-label="Vorteile">
+      <div class="container trust-grid">
+        <div><strong>Einseitig</strong><span>Stud.IP bleibt unverändert</span></div>
+        <div><strong>Lokal</strong><span>Kein zentraler Server</span></div>
+        <div><strong>Automatisch</strong><span>Auf Wunsch jeden Tag</span></div>
+        <div><strong>Übersichtlich</strong><span>Ein Ordner pro Kurs</span></div>
       </div>
     </section>
 
     <section id="funktionen" class="section">
       <div class="container">
-        <p class="eyebrow">Übersichtlich und lokal</p>
-        <h2>Wichtige Funktionen</h2>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Weniger suchen, mehr lernen</p>
+            <h2>Die praktische Verbindung zwischen Studium und Ablage.</h2>
+          </div>
+          <p>StudIPSync übernimmt wiederkehrende Downloads und schafft eine verlässliche Ordnerstruktur in deinem Drive.</p>
+        </div>
         <div class="feature-grid">
-          <article class="feature-card"><span class="feature-number">01</span><h3>Einrichtung in wenigen Schritten</h3><p>Stud.IP-Zugangsdaten, Google Drive und Zielordner einmal konfigurieren.</p></article>
-          <article class="feature-card"><span class="feature-number">02</span><h3>Keine doppelten Uploads</h3><p>Der lokale Synchronisationsstatus verhindert unnötige erneute Übertragungen.</p></article>
-          <article class="feature-card"><span class="feature-number">03</span><h3>Tägliche Automatik</h3><p>Die Windows-Aufgabenplanung kann die Synchronisierung selbstständig starten.</p></article>
+          <article class="feature-card feature-card-large">
+            <span class="feature-icon"><svg viewBox="0 0 24 24"><path d="M5 7h5l2 2h7v10H5V7Zm0 4h14"/></svg></span>
+            <div><p class="feature-kicker">Ordnung ab dem ersten Lauf</p><h3>Kursordner entstehen automatisch.</h3><p>Jeder Kurs erhält einen eigenen Ordner. Neue Unterlagen landen direkt dort, wo du sie erwartest.</p></div>
+            <div class="folder-stack" aria-hidden="true">
+              <span>Statistik</span><span>Marketing</span><span>Wirtschaftsrecht</span>
+            </div>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg></span>
+            <p class="feature-kicker">Einmal einrichten</p>
+            <h3>Läuft auf Wunsch täglich.</h3>
+            <p>Lege eine Uhrzeit fest. Die Windows-Aufgabenplanung startet die Synchronisierung automatisch.</p>
+          </article>
+          <article class="feature-card dark-card">
+            <span class="feature-icon"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 2.8 8 7 10 4.2-2 7-5.5 7-10V6l-7-3Zm-3 9 2 2 4-5"/></svg></span>
+            <p class="feature-kicker">Bewusst lokal</p>
+            <h3>Deine Daten bleiben bei dir.</h3>
+            <p>StudIPSync arbeitet auf deinem Computer. Zugangsdaten und Status werden nicht über einen fremden Server geleitet.</p>
+          </article>
         </div>
       </div>
     </section>
 
-    <section id="so-funktioniert-es" class="section section-muted">
-      <div class="container split">
-        <div><p class="eyebrow">Ablauf</p><h2>Ein klarer Weg für deine Kursdateien.</h2></div>
+    <section id="ablauf" class="section process-section">
+      <div class="container">
+        <div class="section-heading centered">
+          <p class="eyebrow">In wenigen Minuten startklar</p>
+          <h2>Drei Schritte. Danach läuft’s.</h2>
+        </div>
         <ol class="steps">
-          <li><strong>Google verbinden.</strong> Im Browser mit deinem Google-Konto anmelden und den Drive-Zugriff erlauben.</li>
-          <li><strong>Stud.IP einrichten.</strong> Zugangsdaten und Zielordner angeben.</li>
-          <li><strong>Synchronisieren.</strong> Manuell starten oder eine tägliche Uhrzeit festlegen.</li>
+          <li>
+            <span class="step-number">01</span>
+            <div class="step-icon"><svg viewBox="0 0 24 24"><path d="M8 12h8M12 8v8M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"/></svg></div>
+            <h3>Google Drive verbinden</h3>
+            <p>Melde dich sicher über Google OAuth an und wähle deinen Zielordner.</p>
+          </li>
+          <li>
+            <span class="step-number">02</span>
+            <div class="step-icon"><svg viewBox="0 0 24 24"><path d="M5 20v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg></div>
+            <h3>Stud.IP einrichten</h3>
+            <p>Hinterlege deine Zugangsdaten direkt in der lokalen Anwendung.</p>
+          </li>
+          <li>
+            <span class="step-number">03</span>
+            <div class="step-icon"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M6.1 8a7 7 0 0 1 11.5-2L20 8M4 16l2.4 2A7 7 0 0 0 18 16"/></svg></div>
+            <h3>Synchronisieren</h3>
+            <p>Starte sofort manuell oder aktiviere einen täglichen automatischen Lauf.</p>
+          </li>
         </ol>
       </div>
     </section>
 
-    <section id="datenschutz" class="section">
-      <div class="container narrow">
-        <p class="eyebrow">Datenschutz</p>
-        <h2>Deine Konten bleiben deine Konten.</h2>
-        <p>StudIPSync arbeitet als lokale Windows-Anwendung. Google-Zugriffstoken, Stud.IP-Zugangsdaten und der Synchronisationsstatus werden lokal auf deinem Computer gespeichert. Es gibt keinen zentralen StudIPSync-Server.</p>
-        <p><a class="text-link" href="/datenschutz.html">Datenschutzerklärung lesen →</a></p>
+    <section id="sicherheit" class="section security-section">
+      <div class="container security-grid">
+        <div class="security-visual" aria-hidden="true">
+          <div class="shield">
+            <svg viewBox="0 0 80 80"><path d="M40 9 16 19v17c0 16 9.6 28.4 24 35 14.4-6.6 24-19 24-35V19L40 9Z"/><path d="m29 39 7 7 15-16"/></svg>
+          </div>
+          <span class="orbit orbit-one"></span><span class="orbit orbit-two"></span>
+        </div>
+        <div>
+          <p class="eyebrow">Privat by Design</p>
+          <h2>Keine Zwischenstation für deine Daten.</h2>
+          <p class="security-lead">StudIPSync ist eine lokale Windows-Anwendung. Es gibt keinen zentralen StudIPSync-Server, der deine Konten oder Kursdateien verarbeitet.</p>
+          <ul class="security-list">
+            <li><span><svg viewBox="0 0 20 20"><path d="m5 10 3 3 7-7"/></svg></span><div><strong>Lokale Speicherung</strong><small>Zugangsdaten, OAuth-Token und Synchronisationsstatus bleiben auf deinem Computer.</small></div></li>
+            <li><span><svg viewBox="0 0 20 20"><path d="m5 10 3 3 7-7"/></svg></span><div><strong>Kontrollierter Zugriff</strong><small>Google Drive wird erst nach deiner ausdrücklichen Freigabe verbunden.</small></div></li>
+            <li><span><svg viewBox="0 0 20 20"><path d="m5 10 3 3 7-7"/></svg></span><div><strong>Ein Weg, keine Änderungen</strong><small>Die Synchronisierung liest aus Stud.IP und schreibt nichts dorthin zurück.</small></div></li>
+          </ul>
+          <a class="text-link arrow-link" href="/datenschutz.html">Datenschutzerklärung lesen <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10M11 6l4 4-4 4"/></svg></a>
+        </div>
       </div>
     </section>
 
     <section id="download" class="section download-section">
       <div class="container download-card">
-        <div><p class="eyebrow">Windows</p><h2>StudIPSync ausprobieren</h2><p>Der Download-Link wird hier ergänzt, sobald die erste veröffentlichte Version bereitsteht.</p></div>
-        <!-- Ersetze diesen Link durch die veröffentlichte EXE-URL. -->
-        <a class="button button-disabled" href="#download" aria-disabled="true">Download folgt</a>
+        <div class="download-copy">
+          <p class="eyebrow">Für Windows</p>
+          <h2>Bereit für weniger Datei-Chaos?</h2>
+          <p>StudIPSync befindet sich aktuell in Vorbereitung. Sobald die erste Version geprüft ist, findest du den Download genau hier.</p>
+          <div class="release-note"><span></span>Erste öffentliche Version in Vorbereitung</div>
+        </div>
+        <div class="download-action">
+          <span class="windows-tile" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 5.2 10.5 4v7H3V5.2Zm8.5-1.4L21 2.5V11h-9.5V3.8ZM3 12h7.5v7L3 17.8V12Zm8.5 0H21v9.5l-9.5-1.3V12Z"/></svg></span>
+          <span><strong>Download folgt</strong><small>Windows 10 &amp; 11</small></span>
+        </div>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="container footer-inner">
-      <span>© 2026 StudIPSync</span>
-      <span><a href="/datenschutz.html">Datenschutz</a> · <a href="/impressum.html">Impressum</a></span>
+    <div class="container footer-main">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h10M14 4l3 3-3 3M17 17H7M10 14l-3 3 3 3"/></svg></span>
+        StudIPSync
+      </a>
+      <p>Kursdateien aus Stud.IP, ordentlich in Google Drive.</p>
+      <div class="footer-links"><a href="/datenschutz.html">Datenschutz</a><a href="/impressum.html">Impressum</a></div>
     </div>
+    <div class="container footer-bottom"><span>© 2026 StudIPSync</span><span>Unabhängiges Projekt für Studierende</span></div>
   </footer>
 </body>
 </html>
