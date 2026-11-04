@@ -38,9 +38,12 @@ h3 { font-size: 1.2rem; }
 .feature-card p, .section p { color: var(--muted); }
 .feature-number { display: block; margin-bottom: 44px; color: var(--blue); font-weight: 800; }
 .split { display: grid; grid-template-columns: .9fr 1.1fr; gap: 56px; align-items: start; }
-.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 0; margin: 0; list-style: none; counter-reset: steps; }
-.steps li { counter-increment: steps; display: block; padding: 0 0 16px; border-bottom: 1px solid var(--line); }
-.steps li::before { content: counter(steps, decimal-leading-zero); color: var(--blue); font-weight: 800; }
+.steps { display: grid; grid-template-columns: 1fr; gap: 0; padding: 0; margin: 0; list-style: none; }
+.steps li { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 18px; padding: 0 0 28px; margin: 0 0 28px; border-bottom: 1px solid var(--line); }
+.steps li:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
+.step-number { color: var(--blue); font-weight: 800; }
+.steps strong { display: block; margin-bottom: 18px; }
+.steps p { margin: 0; color: var(--muted); }
 .download-card { display: flex; align-items: center; justify-content: space-between; gap: 28px; padding: 34px; background: #eef2ff; box-shadow: none; }
 .download-card p { margin-bottom: 0; color: var(--muted); }
 .legal-content { max-width: 760px; }
