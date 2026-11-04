@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ -d "site" ]] || {
+  echo "Expected static site output at site" >&2
+  exit 1
+}
+
+figma make deploy --build-dir "site"

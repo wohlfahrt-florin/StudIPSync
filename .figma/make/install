@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# The preview serves the dependency-free static site.
+exit 0
