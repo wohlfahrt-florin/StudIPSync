@@ -1,0 +1,6 @@
+services:
+  studipsync:
+    image: studipsync
+    build:
+      context: .
+      dockerfile: ./Dockerfile

@@ -22,6 +22,9 @@ Google-Drive-Ordner – ein Unterordner pro Kurs.
 | `credentials.json` / `token.json` | Google-OAuth – nicht ins Repository legen |
 | `sync_state.json` | Lokaler Status bereits hochgeladener Stud.IP-Dateien |
 | `calendar_watch_state.json` | Lokaler Ausgangsbestand für den Terminvergleich |
+| `app.py` | Grafische Windows-Oberfläche und Einstiegspunkt der Desktop-App |
+| `task_scheduler.py` | Einrichtung der täglichen Windows-Aufgabe |
+| `build_windows.ps1` | Erstellt die Windows-EXE |
 
 ## Setup
 
@@ -48,8 +51,40 @@ Die Synchronisation berücksichtigt die 22 Kurse, die das WiSe 2026/27
 erkannt. Dateien im Drive werden weder gelöscht noch zurück nach Stud.IP
 übertragen.
 
-Für eine automatische Ausführung muss `studipsync.py` regelmäßig gestartet
-werden, zum Beispiel über die Windows-Aufgabenplanung.
+## Desktop-App für Windows
+
+Nach der Installation der Abhängigkeiten kannst du die Oberfläche direkt starten:
+
+```powershell
+\.venv\Scripts\python.exe .\app.py
+```
+
+In der App trägst du Stud.IP-Kennung und Passwort, die Google-Drive-Ordner-ID
+und deine Google-OAuth-`credentials.json` ein. Die Einstellungen, das Google-
+Anmeldetoken und der Synchronisationsstatus werden lokal im Projektordner
+gespeichert, wenn du Python verwendest. In der erstellten EXE liegen sie unter
+`%LOCALAPPDATA%\StudIPSync`; Zugangsdaten werden nicht in die EXE eingebaut.
+Beim ersten Start aus dem Projektordner übernimmt die EXE vorhandene
+Einstellungen, OAuth-Anmeldung und den Synchronisationsstatus, damit bereits
+hochgeladene Dateien nicht erneut übertragen werden. Danach öffnet sich bei
+Bedarf der Browser für die Google-Anmeldung.
+
+Mit **Jetzt synchronisieren** startest du einen Lauf manuell. **Automatik
+aktivieren** erstellt eine tägliche Aufgabe in der Windows-Aufgabenplanung.
+Sie läuft unabhängig von VS Code, solange du in Windows angemeldet bist.
+Windows darf den PC dafür aus dem Energiesparmodus wecken; bei ausgeschaltetem
+PC läuft sie nicht. Die letzte Ausgabe ist in der App und in `sync.log`
+sichtbar. Mit **Deaktivieren** entfernst du die tägliche Aufgabe wieder.
+
+Zum Erstellen der portablen Windows-App führe im Projektordner aus:
+
+```powershell
+.\build_windows.ps1
+```
+
+Die Datei `dist\StudIPSync.exe` kann anschließend gestartet und an einen
+passenden Ort kopiert werden. Bei einem anderen PC müssen dort die Zugangsdaten
+und die Google-OAuth-Datei erneut in der App eingerichtet werden.
 
 ## Stud.IP-Termine beobachten
 

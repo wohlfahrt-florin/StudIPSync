@@ -15,16 +15,14 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from app_paths import PROJECT_DIR
 from drive_client import DriveClient
 from studip_client import StudIPClient, TARGET_SEMESTER
 from sync_paths import temp_path_for
 from sync_state import SyncState
 
 
-PROJECT_DIR = Path(__file__).resolve().parent
-
-
-def download_to_temp(studip, file_ref, course_name):
+def download_to_temp(studip, file_ref, course_name, project_dir=PROJECT_DIR):
     """Speichert eine Stud.IP-Datei im lokalen, kursbezogenen Zwischenspeicher.
 
     Die File-Ref-ID wird dem lokalen Namen vorangestellt. So können zwei
@@ -37,7 +35,7 @@ def download_to_temp(studip, file_ref, course_name):
         temp_path_for(
             course_name,
             local_name,
-            temp_root=str(PROJECT_DIR / "temp"),
+            temp_root=str(project_dir / "temp"),
         )
     )
     local_path.parent.mkdir(parents=True, exist_ok=True)
@@ -45,7 +43,7 @@ def download_to_temp(studip, file_ref, course_name):
     return local_path
 
 
-def synchronize():
+def synchronize(project_dir=PROJECT_DIR, log=print):
     """Führt eine vollständige, einseitige Synchronisationsrunde aus.
 
     Für jede neue Stud.IP-Datei gilt die Reihenfolge:
@@ -58,7 +56,8 @@ def synchronize():
     Es gibt absichtlich keinen Zugriff, der Dateien im Drive löscht oder nach
     Stud.IP zurückschreibt.
     """
-    load_dotenv(PROJECT_DIR / ".env")
+    project_dir = Path(project_dir)
+    load_dotenv(project_dir / ".env", override=True)
     username = os.environ["STUDIP_USER"]
     password = os.environ["STUDIP_PASSWORD"]
     root_folder_id = os.environ["DRIVE_ROOT_FOLDER_ID"]
@@ -66,13 +65,13 @@ def synchronize():
     studip = StudIPClient(username, password)
     user = studip.current_user()
     courses = studip.semester_courses(user["id"], TARGET_SEMESTER)
-    print(f"{len(courses)} Kurse im {TARGET_SEMESTER} gefunden.")
+    log(f"{len(courses)} Kurse im {TARGET_SEMESTER} gefunden.")
 
-    drive = DriveClient(PROJECT_DIR, root_folder_id)
-    state = SyncState(PROJECT_DIR / "sync_state.json")
+    drive = DriveClient(project_dir, root_folder_id)
+    state = SyncState(project_dir / "sync_state.json")
 
     for course_id, course_name in courses:
-        print(f"Kurs: {course_name}")
+        log(f"Kurs: {course_name}")
         drive_folder_id = drive.ensure_course_folder(course_name)
 
         for file_ref in studip.file_refs(course_id):
@@ -86,7 +85,7 @@ def synchronize():
             if state.contains(state_key):
                 continue
 
-            local_path = download_to_temp(studip, file_ref, course_name)
+            local_path = download_to_temp(studip, file_ref, course_name, project_dir)
             drive_file_id = drive.upload(
                 str(local_path),
                 attributes["name"],
@@ -107,9 +106,9 @@ def synchronize():
                     "studip_changed": attributes.get("chdate"),
                 },
             )
-            print(f"  Neu: {attributes['name']}")
+            log(f"  Neu: {attributes['name']}")
 
-    print("Synchronisation abgeschlossen. Richtung: Stud.IP -> Google Drive")
+    log("Synchronisation abgeschlossen. Richtung: Stud.IP -> Google Drive")
 
 
 if __name__ == "__main__":
