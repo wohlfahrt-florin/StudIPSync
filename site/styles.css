@@ -26,6 +26,13 @@ svg { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; strok
 .hero-content h1 { display: flex; align-items: center; gap: clamp(22px, 4vw, 54px); margin: 0; font-size: clamp(3rem, 7.2vw, 6.4rem); font-weight: 760; line-height: 1; letter-spacing: -.055em; }
 .hero-content h1 svg { width: clamp(36px, 5vw, 64px); flex: 0 0 auto; color: var(--green); stroke-width: 1.35; }
 .hero-content p { margin: 28px 0 0; color: var(--muted); font-size: .8rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: 10px; padding: 0 18px; border: 1px solid var(--green); border-radius: 10px; font-size: .82rem; font-weight: 750; text-decoration: none; transition: background .2s ease, border-color .2s ease, color .2s ease; }
+.button svg { width: 18px; }
+.button-primary { color: #fff; background: var(--green); }
+.button-primary:hover { background: var(--green-dark); border-color: var(--green-dark); }
+.button-secondary { color: var(--ink); background: transparent; border-color: #cbd4cc; }
+.button-secondary:hover { color: var(--green); border-color: var(--green); }
 
 .site-footer { flex: 0 0 auto; color: var(--muted); border-top: 1px solid var(--line); }
 .footer-bottom { display: flex; min-height: 58px; align-items: center; justify-content: space-between; gap: 24px; font-size: .72rem; }
