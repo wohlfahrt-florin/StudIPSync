@@ -9,6 +9,15 @@ import sys
 PROJECT_DIR = Path(__file__).resolve().parent
 
 
+def bundled_credentials_path():
+    """Return the OAuth client file bundled into a packaged executable."""
+    if not getattr(sys, "frozen", False):
+        return None
+    bundle_dir = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    path = bundle_dir / "credentials.json"
+    return path if path.is_file() else None
+
+
 def data_dir():
     """Return a writable per-user folder for a packaged app, or the project folder."""
     if not getattr(sys, "frozen", False):

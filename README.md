@@ -69,6 +69,13 @@ Einstellungen, OAuth-Anmeldung und den Synchronisationsstatus, damit bereits
 hochgeladene Dateien nicht erneut übertragen werden. Danach öffnet sich bei
 Bedarf der Browser für die Google-Anmeldung.
 
+Für eine Weitergabe an andere Benutzer wird der Desktop-OAuth-Client beim
+Build in die EXE eingebettet. `credentials.json` bleibt dabei trotzdem aus dem
+Repository ausgeschlossen. Lege die Datei lokal in den Projektordner und führe
+danach `build_windows.ps1` aus. Die Benutzer müssen keine OAuth-Datei selbst
+herunterladen; sie melden sich beim ersten Start im Browser an und erlauben den
+Drive-Zugriff.
+
 Mit **Jetzt synchronisieren** startest du einen Lauf manuell. **Automatik
 aktivieren** erstellt eine tägliche Aufgabe in der Windows-Aufgabenplanung.
 Sie läuft unabhängig von VS Code, solange du in Windows angemeldet bist.

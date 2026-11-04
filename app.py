@@ -13,7 +13,7 @@ import customtkinter as ctk
 from dotenv import dotenv_values, set_key
 from tkinter import filedialog, messagebox
 
-from app_paths import data_dir
+from app_paths import bundled_credentials_path, data_dir
 from studipsync import synchronize
 from task_scheduler import create_daily_task, delete_daily_task
 
@@ -43,8 +43,10 @@ def save_configuration(username, password, folder_id, credentials_source):
     credentials_target = directory / "credentials.json"
     source = Path(credentials_source) if credentials_source else credentials_target
     if not source.is_file():
+        source = bundled_credentials_path() or source
+    if not source.is_file():
         raise FileNotFoundError(
-            "Die Google-OAuth-Datei fehlt. Bitte credentials.json auswählen."
+            "Die Google-OAuth-Konfiguration fehlt. Bitte die Produktions-EXE neu bauen."
         )
     if source.resolve() != credentials_target.resolve():
         shutil.copy2(source, credentials_target)
@@ -274,6 +276,11 @@ class StudIPSyncApp(ctk.CTk):
         if credentials_file.is_file():
             self.credentials_source = str(credentials_file)
             self.credentials_label.configure(text="Google-Zugangsdaten vorhanden")
+        else:
+            bundled_credentials = bundled_credentials_path()
+            if bundled_credentials:
+                self.credentials_source = str(bundled_credentials)
+                self.credentials_label.configure(text="Google-Zugangsdaten integriert")
 
     def _choose_credentials(self):
         path = filedialog.askopenfilename(
