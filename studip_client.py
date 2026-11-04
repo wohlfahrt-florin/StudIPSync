@@ -7,6 +7,7 @@ Dadurch kann der Stud.IP-Zugriff unabhängig getestet und erklärt werden.
 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+import time
 
 import requests
 
@@ -29,11 +30,19 @@ class StudIPClient:
         # Stud.IP mit HTTP 406 (Not Acceptable) antworten.
         self.session.headers.update({"Accept": "application/vnd.api+json"})
 
+    @staticmethod
+    def _get_response(session, url, params=None, timeout=30):
+        """Wiederholt vorübergehende Serverfehler begrenzt."""
+        for attempt in range(3):
+            response = session.get(url, params=params, timeout=timeout)
+            if response.status_code < 500 or attempt == 2:
+                response.raise_for_status()
+                return response
+            time.sleep(0.5 * (2**attempt))
+
     def get_json(self, url, params=None):
         """Sendet einen GET-Request und gibt die JSON-Nutzdaten zurück."""
-        response = self.session.get(url, params=params, timeout=30)
-        response.raise_for_status()
-        return response.json()
+        return self._get_response(self.session, url, params=params).json()
 
     def current_user(self):
         """Liefert die Daten des aktuell angemeldeten Stud.IP-Benutzers."""
@@ -74,11 +83,11 @@ class StudIPClient:
             course_session = requests.Session()
             course_session.auth = self.session.auth
             course_session.headers.update({"Accept": "application/vnd.api+json"})
-            data = course_session.get(
+            data = self._get_response(
+                course_session,
                 f"{API_URL}/courses/{course_id}",
                 timeout=30,
             )
-            data.raise_for_status()
             course = data.json()["data"]
 
             relationships = course["relationships"]
@@ -121,6 +130,22 @@ class StudIPClient:
             total = payload.get("meta", {}).get("page", {}).get("total")
             if not page or (total is not None and len(file_refs) >= total):
                 return file_refs
+            offset += len(page)
+
+    def course_events(self, course_id):
+        """Lädt alle Termine eines Kurses, inklusive Pagination."""
+        events = []
+        offset = 0
+        while True:
+            payload = self.get_json(
+                f"{API_URL}/courses/{course_id}/events",
+                params={"page[limit]": 100, "page[offset]": offset},
+            )
+            page = payload.get("data", [])
+            events.extend(page)
+            total = payload.get("meta", {}).get("page", {}).get("total")
+            if not page or (total is not None and len(events) >= total):
+                return events
             offset += len(page)
 
     def download_file(self, file_ref):
