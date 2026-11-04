@@ -7,13 +7,13 @@ berühren. Die wiederverwendbare API-Logik liegt in ``studip_client.py``.
 
 import os
 from pathlib import Path
+import sys
 
 from dotenv import load_dotenv
 
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_DIR))
 from studip_client import StudIPClient, TARGET_SEMESTER
-
-
-PROJECT_DIR = Path(__file__).resolve().parent
 
 
 def main():

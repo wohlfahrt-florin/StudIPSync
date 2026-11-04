@@ -2,5 +2,5 @@ services:
   studipsync:
     image: studipsync
     build:
-      context: .
-      dockerfile: ./Dockerfile
+      context: ../..
+      dockerfile: packaging/docker/Dockerfile

@@ -1,9 +1,13 @@
 import os
 import time
+from pathlib import Path
+import sys
 import requests
 from dotenv import load_dotenv
 
-load_dotenv()
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_DIR))
+load_dotenv(PROJECT_DIR / ".env")
 from bs4 import BeautifulSoup
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow

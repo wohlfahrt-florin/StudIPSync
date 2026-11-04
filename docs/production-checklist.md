@@ -18,7 +18,7 @@
 
 - [ ] `credentials.json` niemals committen oder veröffentlichen.
 - [ ] `credentials.json` in den Projektordner legen.
-- [ ] `build_windows.ps1` ausführen.
+- [ ] `packaging/windows/build_windows.ps1` ausführen.
 - [ ] Die erzeugte `dist/StudIPSync.exe` auf einem zweiten Windows-PC testen.
 - [ ] Mit einem Test-Drive-Ordner synchronisieren.
 - [ ] Erneuten Lauf testen: bereits synchronisierte Dateien dürfen nicht erneut

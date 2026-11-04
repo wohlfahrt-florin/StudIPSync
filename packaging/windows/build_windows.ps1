@@ -1,11 +1,14 @@
 $ErrorActionPreference = "Stop"
 
-$python = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
+$projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+Set-Location $projectRoot
+
+$python = Join-Path $projectRoot ".venv\Scripts\python.exe"
 if (-not (Test-Path $python)) {
     throw "Python-Umgebung nicht gefunden: $python"
 }
 
-$credentials = Join-Path $PSScriptRoot "credentials.json"
+$credentials = Join-Path $projectRoot "credentials.json"
 if (-not (Test-Path $credentials)) {
     throw "credentials.json fehlt. Lege den Desktop-OAuth-Client in den Projektordner und starte den Build erneut."
 }
@@ -18,7 +21,7 @@ if (-not (Test-Path $credentials)) {
     --name StudIPSync `
     --collect-all customtkinter `
     --add-data "$credentials;." `
-    (Join-Path $PSScriptRoot "app.py")
+    (Join-Path $projectRoot "app.py")
 
 if ($LASTEXITCODE -ne 0) {
     throw "PyInstaller wurde mit Exitcode $LASTEXITCODE beendet."

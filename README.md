@@ -14,17 +14,18 @@ Google-Drive-Ordner – ein Unterordner pro Kurs.
 | `studip_client.py` | Authentifizierter Zugriff auf die Stud.IP-JSON-API |
 | `drive_client.py` | Google-OAuth, Kursordner und Uploads |
 | `sync_state.py` | Status bereits hochgeladener Stud.IP-Dateien |
-| `StudIP_API_Test.py` | Test der Stud.IP-JSON-API und Ausgabe der Kurse |
-| `sync_paths.py` | Sichere lokale Pfade für Kurse und Dateien |
-| `test_studipsync.py` | Tests für die Pfadfunktionen |
 | `calendar_watch.py` | Meldet neue/geänderte Stud.IP-Termine zur manuellen Prüfung |
+| `tests/` | Automatisierte Tests |
+| `scripts/` | Manuelle API- und Integrationsskripte |
+| `packaging/` | Windows-EXE- und Docker-Konfiguration |
+| `site/` | Statische Homepage, Datenschutz und Impressum |
+| `docs/` | Produktions- und Veröffentlichungsdokumentation |
 | `.env.example` | Vorlage für Zugangsdaten und Drive-Zielordner |
 | `credentials.json` / `token.json` | Google-OAuth – nicht ins Repository legen |
 | `sync_state.json` | Lokaler Status bereits hochgeladener Stud.IP-Dateien |
 | `calendar_watch_state.json` | Lokaler Ausgangsbestand für den Terminvergleich |
 | `app.py` | Grafische Windows-Oberfläche und Einstiegspunkt der Desktop-App |
 | `task_scheduler.py` | Einrichtung der täglichen Windows-Aufgabe |
-| `build_windows.ps1` | Erstellt die Windows-EXE |
 
 ## Setup
 
@@ -39,10 +40,16 @@ Danach `.env` ausfüllen und `credentials.json` aus der Google Cloud Console
 Beim ersten Start öffnet sich der Browser für die Google-Anmeldung; danach wird
 `token.json` wiederverwendet.
 
+Die automatisierten Tests startest du aus dem Projektordner mit:
+
+```powershell
+\.venv\Scripts\python.exe -m unittest discover -s tests -t . -v
+```
+
 ## Nutzung
 
 ```powershell
-\.venv\Scripts\python.exe .\StudIP_API_Test.py
+\.venv\Scripts\python.exe .\scripts\StudIP_API_Test.py
 \.venv\Scripts\python.exe .\studipsync.py
 ```
 
@@ -72,7 +79,7 @@ Bedarf der Browser für die Google-Anmeldung.
 Für eine Weitergabe an andere Benutzer wird der Desktop-OAuth-Client beim
 Build in die EXE eingebettet. `credentials.json` bleibt dabei trotzdem aus dem
 Repository ausgeschlossen. Lege die Datei lokal in den Projektordner und führe
-danach `build_windows.ps1` aus. Die Benutzer müssen keine OAuth-Datei selbst
+danach `packaging\windows\build_windows.ps1` aus. Die Benutzer müssen keine OAuth-Datei selbst
 herunterladen; sie melden sich beim ersten Start im Browser an und erlauben den
 Drive-Zugriff.
 
@@ -86,7 +93,7 @@ sichtbar. Mit **Deaktivieren** entfernst du die tägliche Aufgabe wieder.
 Zum Erstellen der portablen Windows-App führe im Projektordner aus:
 
 ```powershell
-.\build_windows.ps1
+.\packaging\windows\build_windows.ps1
 ```
 
 Die Datei `dist\StudIPSync.exe` kann anschließend gestartet und an einen
