@@ -1,0 +1,10 @@
+{
+  "description": "I can’t determine the app’s features or audience from setup and deployment instructions alone; they don’t describe the web application itself.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
