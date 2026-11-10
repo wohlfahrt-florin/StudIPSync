@@ -1,0 +1,21 @@
+{
+  "name": "StudIPSync",
+  "short_name": "StudIPSync",
+  "description": "Neue Kursdateien aus Stud.IP automatisch mit Google Drive synchronisieren.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f8f5",
+  "theme_color": "#2f6b4f",
+  "icons": [
+    {
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -19,8 +19,10 @@ if (-not (Test-Path $credentials)) {
     --windowed `
     --onefile `
     --name StudIPSync `
+    --icon (Join-Path $projectRoot "assets\studipsync.ico") `
     --collect-all customtkinter `
     --add-data "$credentials;." `
+    --add-data "$(Join-Path $projectRoot 'assets');assets" `
     (Join-Path $projectRoot "app.py")
 
 if ($LASTEXITCODE -ne 0) {

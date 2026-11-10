@@ -11,6 +11,7 @@ import threading
 
 import customtkinter as ctk
 from dotenv import dotenv_values, set_key
+from PIL import Image
 from tkinter import messagebox
 
 from app_paths import bundled_credentials_path, data_dir
@@ -102,6 +103,7 @@ class StudIPSyncApp(ctk.CTk):
         self.geometry("940x680")
         self.minsize(860, 620)
         self.configure(fg_color=COLORS["background"])
+        self._set_window_icon()
         self.event_queue = queue.Queue()
         self.is_syncing = False
 
@@ -111,6 +113,16 @@ class StudIPSyncApp(ctk.CTk):
         self._build_ui()
         self._load_configuration()
         self.after(150, self._process_events)
+
+    def _set_window_icon(self):
+        """Use the shared brand icon in development and in the packaged app."""
+        base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+        icon_path = base / "assets" / "studipsync.ico"
+        if icon_path.is_file():
+            try:
+                self.iconbitmap(str(icon_path))
+            except Exception:
+                pass
 
     def _build_ui(self):
         self.grid_columnconfigure(0, weight=1)
@@ -124,15 +136,14 @@ class StudIPSyncApp(ctk.CTk):
         header = ctk.CTkFrame(self.content, fg_color="transparent", height=66)
         header.grid(row=0, column=0, columnspan=2, sticky="ew", padx=32, pady=(18, 12))
         header.grid_columnconfigure(1, weight=1)
+        logo_path = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent)) / "assets" / "icon-64.png"
+        self.logo_image = ctk.CTkImage(light_image=Image.open(logo_path), size=(38, 38))
         ctk.CTkLabel(
             header,
-            text="S",
+            text="",
+            image=self.logo_image,
             width=38,
             height=38,
-            corner_radius=10,
-            fg_color=COLORS["green"],
-            text_color="white",
-            font=ctk.CTkFont(size=17, weight="bold"),
         ).grid(row=0, column=0, rowspan=2, sticky="w", padx=(0, 12))
         ctk.CTkLabel(
             header,
