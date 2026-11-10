@@ -5,7 +5,10 @@ keine Funktion zum Löschen oder Herunterladen aus Google Drive: Drive ist in
 diesem Projekt ausschließlich das Zielsystem.
 """
 
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
+import webbrowser
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -15,6 +18,84 @@ from googleapiclient.http import MediaFileUpload
 
 
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]
+
+
+def parse_picker_callback(callback_url, expected_state):
+    """Return the authorization code and single selected Drive folder ID."""
+    parameters = parse_qs(urlparse(callback_url).query)
+    returned_state = parameters.get("state", [None])[0]
+    if returned_state != expected_state:
+        raise ValueError("Die Google-Anmeldung konnte nicht sicher zugeordnet werden.")
+
+    error = parameters.get("error", [None])[0]
+    if error:
+        raise ValueError(f"Google-Ordnerauswahl abgebrochen: {error}")
+
+    authorization_code = parameters.get("code", [None])[0]
+    selected_ids = parameters.get("picked_file_ids", [None])[0]
+    if not authorization_code or not selected_ids:
+        raise ValueError("Google hat keinen Ordner zur Auswahl zurueckgegeben.")
+
+    folder_ids = selected_ids.split(",")
+    if len(folder_ids) != 1 or not folder_ids[0]:
+        raise ValueError("Bitte genau einen Google-Drive-Ordner auswaehlen.")
+    return authorization_code, folder_ids[0]
+
+
+class _PickerCallbackHandler(BaseHTTPRequestHandler):
+    """Capture the OAuth redirect from the desktop Google Picker."""
+
+    def do_GET(self):
+        self.server.callback_url = f"http://{self.headers['Host']}{self.path}"
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(
+            b"<html><body><h2>Ordnerauswahl abgeschlossen</h2>"
+            b"<p>Du kannst dieses Browserfenster schliessen.</p></body></html>"
+        )
+
+    def log_message(self, _format, *_args):
+        pass
+
+
+def pick_drive_folder(project_dir):
+    """Open Google's desktop Picker and return the selected folder ID/name."""
+    project_dir = Path(project_dir)
+    credentials_path = project_dir / "credentials.json"
+    flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
+    server = HTTPServer(("localhost", 0), _PickerCallbackHandler)
+    server.timeout = 300
+    flow.redirect_uri = f"http://localhost:{server.server_port}/"
+
+    authorization_url, state = flow.authorization_url(
+        access_type="offline",
+        prompt="consent",
+        trigger_onepick="true",
+        allow_folder_selection="true",
+        mimetypes="application/vnd.google-apps.folder",
+    )
+    try:
+        if not webbrowser.open(authorization_url, new=1, autoraise=True):
+            raise RuntimeError("Der Browser fuer die Google-Ordnerauswahl konnte nicht geoeffnet werden.")
+        server.handle_request()
+    finally:
+        server.server_close()
+
+    callback_url = getattr(server, "callback_url", None)
+    if not callback_url:
+        raise TimeoutError("Google hat die Ordnerauswahl nicht rechtzeitig abgeschlossen.")
+
+    authorization_code, folder_id = parse_picker_callback(callback_url, state)
+    flow.fetch_token(code=authorization_code)
+    credentials = flow.credentials
+    (project_dir / "token.json").write_text(credentials.to_json(), encoding="utf-8")
+
+    drive = build("drive", "v3", credentials=credentials)
+    folder = drive.files().get(fileId=folder_id, fields="id,name,mimeType").execute()
+    if folder.get("mimeType") != "application/vnd.google-apps.folder":
+        raise ValueError("Das ausgewaehlte Element ist kein Google-Drive-Ordner.")
+    return folder["id"], folder["name"]
 
 
 class DriveClient:

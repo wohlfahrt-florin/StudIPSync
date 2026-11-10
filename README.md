@@ -27,6 +27,9 @@ Google-Drive-Ordner – ein Unterordner pro Kurs.
 | `app.py` | Grafische Windows-Oberfläche und Einstiegspunkt der Desktop-App |
 | `task_scheduler.py` | Einrichtung der täglichen Windows-Aufgabe |
 
+Eine Ablaufskizze mit Programmstarts und dem Zeitpunkt der Objekterzeugung
+steht in [docs/ablauf-und-objekte.md](docs/ablauf-und-objekte.md).
+
 ## Setup
 
 ```powershell
@@ -66,9 +69,11 @@ Nach der Installation der Abhängigkeiten kannst du die Oberfläche direkt start
 \.venv\Scripts\python.exe .\app.py
 ```
 
-In der App trägst du Stud.IP-Kennung und Passwort, die Google-Drive-Ordner-ID
-und deine Google-OAuth-`credentials.json` ein. Die Einstellungen, das Google-
-Anmeldetoken und der Synchronisationsstatus werden lokal im Projektordner
+In der App trägst du Stud.IP-Kennung und Passwort ein und wählst den Google-
+Drive-Zielordner aus. Die Google-OAuth-Konfiguration wird automatisch aus der
+Produktions-EXE oder dem Projektordner verwendet; eine Datei muss in der App
+nicht ausgewählt werden. Die Einstellungen, das Google-Anmeldetoken und der
+Synchronisationsstatus werden lokal im Projektordner
 gespeichert, wenn du Python verwendest. In der erstellten EXE liegen sie unter
 `%LOCALAPPDATA%\StudIPSync`; Zugangsdaten werden nicht in die EXE eingebaut.
 Beim ersten Start aus dem Projektordner übernimmt die EXE vorhandene
@@ -77,11 +82,11 @@ hochgeladene Dateien nicht erneut übertragen werden. Danach öffnet sich bei
 Bedarf der Browser für die Google-Anmeldung.
 
 Für eine Weitergabe an andere Benutzer wird der Desktop-OAuth-Client beim
-Build in die EXE eingebettet. `credentials.json` bleibt dabei trotzdem aus dem
-Repository ausgeschlossen. Lege die Datei lokal in den Projektordner und führe
-danach `packaging\windows\build_windows.ps1` aus. Die Benutzer müssen keine OAuth-Datei selbst
-herunterladen; sie melden sich beim ersten Start im Browser an und erlauben den
-Drive-Zugriff.
+Build aus der lokalen `credentials.json` in die EXE eingebettet. Die Datei
+bleibt aus dem Repository ausgeschlossen. Lege sie lokal in den Projektordner
+und führe danach `packaging\windows\build_windows.ps1` aus. Die Benutzer müssen
+keine OAuth-Datei selbst auswählen oder herunterladen; sie melden sich beim
+ersten Start im Browser an und erlauben den Drive-Zugriff.
 
 Mit **Jetzt synchronisieren** startest du einen Lauf manuell. **Automatik
 aktivieren** erstellt eine tägliche Aufgabe in der Windows-Aufgabenplanung.

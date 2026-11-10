@@ -11,9 +11,10 @@ import threading
 
 import customtkinter as ctk
 from dotenv import dotenv_values, set_key
-from tkinter import filedialog, messagebox
+from tkinter import messagebox
 
 from app_paths import bundled_credentials_path, data_dir
+from drive_client import pick_drive_folder
 from studipsync import synchronize
 from task_scheduler import create_daily_task, delete_daily_task
 
@@ -28,7 +29,7 @@ def runtime_command():
     return sys.executable, str(Path(__file__).resolve())
 
 
-def save_configuration(username, password, folder_id, credentials_source):
+def save_configuration(username, password, folder_id, folder_name=""):
     """Save secrets and the Google OAuth client outside the packaged executable."""
     directory = data_dir()
     env_file = directory / ".env"
@@ -36,15 +37,16 @@ def save_configuration(username, password, folder_id, credentials_source):
         "STUDIP_USER": username.strip(),
         "STUDIP_PASSWORD": password,
         "DRIVE_ROOT_FOLDER_ID": folder_id.strip(),
+        "DRIVE_ROOT_FOLDER_NAME": folder_name.strip(),
     }
-    if not all(values.values()):
-        raise ValueError("Bitte Stud.IP-Zugangsdaten und Drive-Ordner-ID ausfüllen.")
+    if not values["STUDIP_USER"] or not values["STUDIP_PASSWORD"]:
+        raise ValueError("Bitte Stud.IP-Kennung und Passwort ausfüllen.")
 
     credentials_target = directory / "credentials.json"
-    source = Path(credentials_source) if credentials_source else credentials_target
+    source = credentials_target
     if not source.is_file():
-        source = bundled_credentials_path() or source
-    if not source.is_file():
+        source = bundled_credentials_path()
+    if source is None or not source.is_file():
         raise FileNotFoundError(
             "Die Google-OAuth-Konfiguration fehlt. Bitte die Produktions-EXE neu bauen."
         )
@@ -149,7 +151,29 @@ class StudIPSyncApp(ctk.CTk):
 
         self.username_entry = self._add_entry(config, 1, "Stud.IP-Kennung")
         self.password_entry = self._add_entry(config, 2, "Stud.IP-Passwort", show="•")
-        self.folder_entry = self._add_entry(config, 3, "Google-Drive-Ordner-ID")
+        ctk.CTkLabel(
+            config,
+            text="Google-Drive-Zielordner",
+            text_color="#5f6368",
+            font=ctk.CTkFont(size=13),
+        ).grid(row=3, column=0, sticky="w", padx=(20, 12), pady=7)
+        self.folder_label = ctk.CTkLabel(
+            config,
+            text="Noch kein Ordner ausgewählt",
+            text_color="#5f6368",
+            anchor="w",
+        )
+        self.folder_label.grid(row=3, column=1, sticky="ew", pady=7)
+        self.picker_button = ctk.CTkButton(
+            config,
+            text="Ordner auswählen",
+            width=140,
+            height=34,
+            command=self._choose_drive_folder,
+        )
+        self.picker_button.grid(row=3, column=2, padx=(8, 20), pady=7)
+        self.folder_id = ""
+        self.folder_name = ""
 
         ctk.CTkLabel(
             config,
@@ -157,21 +181,20 @@ class StudIPSyncApp(ctk.CTk):
             text_color="#5f6368",
             font=ctk.CTkFont(size=13),
         ).grid(row=4, column=0, sticky="w", padx=(20, 12), pady=(8, 14))
-        self.credentials_source = ""
         self.credentials_label = ctk.CTkLabel(
             config,
-            text="Noch keine Datei ausgewählt",
+            text="Google-OAuth-Konfiguration wird automatisch verwendet",
             text_color="#5f6368",
             anchor="w",
         )
-        self.credentials_label.grid(row=4, column=1, sticky="ew", pady=(8, 14))
-        ctk.CTkButton(
-            config,
-            text="Datei wählen",
-            width=110,
-            height=34,
-            command=self._choose_credentials,
-        ).grid(row=4, column=2, padx=(8, 20), pady=(8, 14))
+        self.credentials_label.grid(
+            row=4,
+            column=1,
+            columnspan=2,
+            sticky="ew",
+            padx=(0, 20),
+            pady=(8, 14),
+        )
         ctk.CTkButton(
             config,
             text="Einstellungen speichern",
@@ -271,48 +294,65 @@ class StudIPSyncApp(ctk.CTk):
         values = dotenv_values(directory / ".env")
         self.username_entry.insert(0, values.get("STUDIP_USER") or "")
         self.password_entry.insert(0, values.get("STUDIP_PASSWORD") or "")
-        self.folder_entry.insert(0, values.get("DRIVE_ROOT_FOLDER_ID") or "")
+        self.folder_id = values.get("DRIVE_ROOT_FOLDER_ID") or ""
+        self.folder_name = values.get("DRIVE_ROOT_FOLDER_NAME") or ""
+        self.folder_label.configure(
+            text=self.folder_name or self.folder_id or "Noch kein Ordner ausgewählt"
+        )
         credentials_file = directory / "credentials.json"
         if credentials_file.is_file():
-            self.credentials_source = str(credentials_file)
             self.credentials_label.configure(text="Google-Zugangsdaten vorhanden")
         else:
             bundled_credentials = bundled_credentials_path()
             if bundled_credentials:
-                self.credentials_source = str(bundled_credentials)
                 self.credentials_label.configure(text="Google-Zugangsdaten integriert")
-
-    def _choose_credentials(self):
-        path = filedialog.askopenfilename(
-            title="Google-OAuth-Datei auswählen",
-            filetypes=[("JSON-Dateien", "*.json"), ("Alle Dateien", "*.*")],
-        )
-        if path:
-            self.credentials_source = path
-            self.credentials_label.configure(text=Path(path).name)
+            else:
+                self.credentials_label.configure(text="Google-OAuth-Konfiguration fehlt")
 
     def _save_settings(self, show_confirmation=True):
         try:
             directory = save_configuration(
                 self.username_entry.get(),
                 self.password_entry.get(),
-                self.folder_entry.get(),
-                self.credentials_source,
+                self.folder_id,
+                self.folder_name,
             )
         except (OSError, ValueError) as error:
             messagebox.showerror("Einstellungen", str(error), parent=self)
             return None
 
-        self.credentials_source = str(directory / "credentials.json")
         self.credentials_label.configure(text="Google-Zugangsdaten gespeichert")
         if show_confirmation:
             messagebox.showinfo("Einstellungen", "Einstellungen wurden gespeichert.", parent=self)
         return directory
 
+    def _choose_drive_folder(self):
+        if self._save_settings(show_confirmation=False) is None:
+            return
+        self.picker_button.configure(state="disabled", text="Browser wird geöffnet …")
+        self.status_label.configure(text="Google-Ordnerauswahl läuft …")
+
+        def worker():
+            try:
+                folder_id, folder_name = pick_drive_folder(data_dir())
+            except Exception as error:
+                self.event_queue.put(("picker_finished", None, None, str(error)))
+            else:
+                self.event_queue.put(("picker_finished", folder_id, folder_name, None))
+
+        threading.Thread(target=worker, daemon=True).start()
+
     def _start_sync(self):
         if self.is_syncing:
             return
         if self._save_settings(show_confirmation=False) is None:
+            return
+        if not self.folder_id:
+            messagebox.showerror(
+                "Einstellungen",
+                "Bitte zuerst einen Google-Drive-Zielordner auswählen.",
+                parent=self,
+            )
             return
         self.is_syncing = True
         self.sync_button.configure(state="disabled", text="Synchronisierung läuft …")
@@ -325,6 +365,13 @@ class StudIPSyncApp(ctk.CTk):
 
     def _enable_schedule(self):
         if self._save_settings(show_confirmation=False) is None:
+            return
+        if not self.folder_id:
+            messagebox.showerror(
+                "Einstellungen",
+                "Bitte zuerst einen Google-Drive-Zielordner auswählen.",
+                parent=self,
+            )
             return
         executable, script = runtime_command()
         try:
@@ -378,6 +425,18 @@ class StudIPSyncApp(ctk.CTk):
                     )
                     if not success:
                         messagebox.showerror("Synchronisierung fehlgeschlagen", message, parent=self)
+                elif isinstance(event, tuple) and event[0] == "picker_finished":
+                    _, folder_id, folder_name, error = event
+                    self.picker_button.configure(state="normal", text="Ordner auswählen")
+                    if error:
+                        self.status_label.configure(text="Ordnerauswahl fehlgeschlagen")
+                        messagebox.showerror("Google-Ordnerauswahl", error, parent=self)
+                    else:
+                        self.folder_id = folder_id
+                        self.folder_name = folder_name
+                        self.folder_label.configure(text=folder_name)
+                        if self._save_settings(show_confirmation=False) is not None:
+                            self.status_label.configure(text="Google-Ordner ausgewählt")
                 else:
                     self._append_log(event)
         except queue.Empty:
