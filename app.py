@@ -20,6 +20,17 @@ from task_scheduler import create_daily_task, delete_daily_task
 
 
 APP_NAME = "StudIPSync"
+COLORS = {
+    "background": "#f7f8f5",
+    "surface": "#ffffff",
+    "ink": "#172019",
+    "muted": "#68736b",
+    "line": "#dfe5df",
+    "green": "#2f6b4f",
+    "green_dark": "#1f513a",
+    "green_light": "#e3eee5",
+    "log": "#f2f5f1",
+}
 
 
 def runtime_command():
@@ -88,14 +99,14 @@ class StudIPSyncApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("StudIPSync")
-        self.geometry("760x640")
-        self.minsize(640, 500)
-        self.configure(fg_color="#f8fafd")
+        self.geometry("940x720")
+        self.minsize(820, 620)
+        self.configure(fg_color=COLORS["background"])
         self.event_queue = queue.Queue()
         self.is_syncing = False
 
         ctk.set_appearance_mode("light")
-        ctk.set_default_color_theme("blue")
+        ctk.set_default_color_theme("green")
 
         self._build_ui()
         self._load_configuration()
@@ -104,189 +115,291 @@ class StudIPSyncApp(ctk.CTk):
     def _build_ui(self):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
-        self.content = ctk.CTkScrollableFrame(self, fg_color="transparent", corner_radius=0)
+        self.content = ctk.CTkScrollableFrame(
+            self,
+            fg_color="transparent",
+            corner_radius=0,
+            scrollbar_button_color=COLORS["line"],
+            scrollbar_button_hover_color="#cbd4cc",
+        )
         self.content.grid(row=0, column=0, sticky="nsew")
-        self.content.grid_columnconfigure(0, weight=1)
+        self.content.grid_columnconfigure(0, weight=1, uniform="content")
+        self.content.grid_columnconfigure(1, weight=1, uniform="content")
 
-        header = ctk.CTkFrame(self.content, fg_color="transparent")
-        header.grid(row=0, column=0, sticky="ew", padx=32, pady=(20, 8))
+        header = ctk.CTkFrame(self.content, fg_color="transparent", height=78)
+        header.grid(row=0, column=0, columnspan=2, sticky="ew", padx=38, pady=(24, 18))
+        header.grid_columnconfigure(1, weight=1)
+        ctk.CTkLabel(
+            header,
+            text="S",
+            width=38,
+            height=38,
+            corner_radius=10,
+            fg_color=COLORS["green"],
+            text_color="white",
+            font=ctk.CTkFont(size=17, weight="bold"),
+        ).grid(row=0, column=0, rowspan=2, sticky="w", padx=(0, 12))
         ctk.CTkLabel(
             header,
             text="StudIPSync",
-            font=ctk.CTkFont(size=28, weight="bold"),
-            text_color="#202124",
-        ).pack(anchor="w")
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color=COLORS["ink"],
+        ).grid(row=0, column=1, sticky="sw")
         ctk.CTkLabel(
             header,
-            text="Kursdateien sicher von Stud.IP nach Google Drive übertragen",
-            font=ctk.CTkFont(size=14),
-            text_color="#5f6368",
-        ).pack(anchor="w", pady=(3, 0))
+            text="Stud.IP  →  Google Drive",
+            font=ctk.CTkFont(size=12),
+            text_color=COLORS["muted"],
+        ).grid(row=1, column=1, sticky="nw")
+        ctk.CTkLabel(
+            header,
+            text="LOKALE WINDOWS-APP",
+            font=ctk.CTkFont(size=10, weight="bold"),
+            text_color=COLORS["muted"],
+        ).grid(row=0, column=2, rowspan=2, sticky="e")
 
-        self.status_card = ctk.CTkFrame(self.content, corner_radius=14, fg_color="white")
-        self.status_card.grid(row=1, column=0, sticky="ew", padx=32, pady=10)
+        self.status_card = ctk.CTkFrame(
+            self.content,
+            corner_radius=18,
+            fg_color=COLORS["green_dark"],
+        )
+        self.status_card.grid(
+            row=1,
+            column=0,
+            columnspan=2,
+            sticky="ew",
+            padx=38,
+            pady=(0, 20),
+        )
+        self.status_card.grid_columnconfigure(0, weight=1)
         self.status_label = ctk.CTkLabel(
             self.status_card,
             text="Bereit für die Synchronisierung",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color="#202124",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="white",
         )
-        self.status_label.pack(anchor="w", padx=20, pady=(16, 2))
+        self.status_label.grid(row=0, column=0, sticky="w", padx=24, pady=(19, 2))
         ctk.CTkLabel(
             self.status_card,
-            text="Es werden nur neue Dateien hochgeladen. Dateien in Drive bleiben unangetastet.",
+            text="Neue Kursdateien aus Stud.IP – automatisch in eurem Google Drive.",
             font=ctk.CTkFont(size=12),
-            text_color="#5f6368",
-        ).pack(anchor="w", padx=20, pady=(0, 16))
+            text_color="#c8d8cc",
+        ).grid(row=1, column=0, sticky="w", padx=24, pady=(0, 19))
 
-        config = ctk.CTkFrame(self.content, corner_radius=14, fg_color="white")
-        config.grid(row=2, column=0, sticky="ew", padx=32, pady=10)
-        config.grid_columnconfigure(1, weight=1)
+        config = ctk.CTkFrame(
+            self.content,
+            corner_radius=18,
+            fg_color=COLORS["surface"],
+            border_width=1,
+            border_color=COLORS["line"],
+        )
+        config.grid(row=2, column=0, sticky="nsew", padx=(38, 10), pady=(0, 20))
+        config.grid_columnconfigure(0, weight=1)
         ctk.CTkLabel(
             config,
-            text="Verbindung einrichten",
-            font=ctk.CTkFont(size=17, weight="bold"),
-            text_color="#202124",
-        ).grid(row=0, column=0, columnspan=3, sticky="w", padx=20, pady=(18, 12))
+            text="Verbindung",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color=COLORS["ink"],
+        ).grid(row=0, column=0, sticky="w", padx=24, pady=(22, 2))
+        ctk.CTkLabel(
+            config,
+            text="Zugangsdaten und Zielordner",
+            font=ctk.CTkFont(size=12),
+            text_color=COLORS["muted"],
+        ).grid(row=1, column=0, sticky="w", padx=24, pady=(0, 17))
 
-        self.username_entry = self._add_entry(config, 1, "Stud.IP-Kennung")
-        self.password_entry = self._add_entry(config, 2, "Stud.IP-Passwort", show="•")
+        self.username_entry = self._add_entry(config, 2, "Stud.IP-Kennung")
+        self.password_entry = self._add_entry(config, 4, "Stud.IP-Passwort", show="•")
+
         ctk.CTkLabel(
             config,
             text="Google-Drive-Zielordner",
-            text_color="#5f6368",
-            font=ctk.CTkFont(size=13),
-        ).grid(row=3, column=0, sticky="w", padx=(20, 12), pady=7)
+            text_color=COLORS["muted"],
+            font=ctk.CTkFont(size=11, weight="bold"),
+        ).grid(row=6, column=0, sticky="w", padx=24, pady=(0, 5))
+        folder_row = ctk.CTkFrame(config, fg_color="transparent")
+        folder_row.grid(row=7, column=0, sticky="ew", padx=24, pady=(0, 12))
+        folder_row.grid_columnconfigure(0, weight=1)
         self.folder_label = ctk.CTkLabel(
-            config,
+            folder_row,
             text="Noch kein Ordner ausgewählt",
-            text_color="#5f6368",
+            text_color=COLORS["muted"],
             anchor="w",
+            font=ctk.CTkFont(size=12),
         )
-        self.folder_label.grid(row=3, column=1, sticky="ew", pady=7)
+        self.folder_label.grid(row=0, column=0, sticky="ew")
         self.picker_button = ctk.CTkButton(
-            config,
+            folder_row,
             text="Ordner auswählen",
-            width=140,
-            height=34,
+            width=118,
+            height=36,
+            corner_radius=9,
+            fg_color=COLORS["green_light"],
+            hover_color="#d4e5d7",
+            text_color=COLORS["green_dark"],
             command=self._choose_drive_folder,
         )
-        self.picker_button.grid(row=3, column=2, padx=(8, 20), pady=7)
+        self.picker_button.grid(row=0, column=1, padx=(10, 0))
         self.folder_id = ""
         self.folder_name = ""
 
         ctk.CTkLabel(
             config,
             text="Google OAuth",
-            text_color="#5f6368",
-            font=ctk.CTkFont(size=13),
-        ).grid(row=4, column=0, sticky="w", padx=(20, 12), pady=(8, 14))
+            text_color=COLORS["muted"],
+            font=ctk.CTkFont(size=11, weight="bold"),
+        ).grid(row=8, column=0, sticky="w", padx=24, pady=(2, 5))
         self.credentials_label = ctk.CTkLabel(
             config,
             text="Google-OAuth-Konfiguration wird automatisch verwendet",
-            text_color="#5f6368",
+            text_color=COLORS["muted"],
             anchor="w",
+            font=ctk.CTkFont(size=12),
         )
-        self.credentials_label.grid(
-            row=4,
-            column=1,
-            columnspan=2,
-            sticky="ew",
-            padx=(0, 20),
-            pady=(8, 14),
-        )
+        self.credentials_label.grid(row=9, column=0, sticky="ew", padx=24, pady=(0, 14))
         ctk.CTkButton(
             config,
             text="Einstellungen speichern",
-            height=36,
-            fg_color="#e8f0fe",
-            hover_color="#d2e3fc",
-            text_color="#1967d2",
+            height=42,
+            corner_radius=10,
+            fg_color=COLORS["green_light"],
+            hover_color="#d4e5d7",
+            text_color=COLORS["green_dark"],
+            font=ctk.CTkFont(size=13, weight="bold"),
             command=self._save_settings,
-        ).grid(row=5, column=0, columnspan=3, sticky="e", padx=20, pady=(0, 18))
+        ).grid(row=10, column=0, sticky="ew", padx=24, pady=(0, 24))
 
-        actions = ctk.CTkFrame(self.content, corner_radius=14, fg_color="white")
-        actions.grid(row=3, column=0, sticky="nsew", padx=32, pady=10)
+        actions = ctk.CTkFrame(
+            self.content,
+            corner_radius=18,
+            fg_color=COLORS["surface"],
+            border_width=1,
+            border_color=COLORS["line"],
+        )
+        actions.grid(row=2, column=1, sticky="nsew", padx=(10, 38), pady=(0, 20))
         actions.grid_columnconfigure(0, weight=1)
-        actions.grid_rowconfigure(2, weight=1)
+        actions.grid_rowconfigure(8, weight=1)
         ctk.CTkLabel(
             actions,
             text="Synchronisierung",
-            font=ctk.CTkFont(size=17, weight="bold"),
-            text_color="#202124",
-        ).grid(row=0, column=0, sticky="w", padx=20, pady=(18, 10))
-        controls = ctk.CTkFrame(actions, fg_color="transparent")
-        controls.grid(row=1, column=0, sticky="ew", padx=20, pady=(0, 12))
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color=COLORS["ink"],
+        ).grid(row=0, column=0, sticky="w", padx=24, pady=(22, 2))
+        ctk.CTkLabel(
+            actions,
+            text="Manuell starten oder täglich ausführen",
+            font=ctk.CTkFont(size=12),
+            text_color=COLORS["muted"],
+        ).grid(row=1, column=0, sticky="w", padx=24, pady=(0, 17))
         self.sync_button = ctk.CTkButton(
-            controls,
+            actions,
             text="Jetzt synchronisieren",
-            height=40,
+            height=46,
+            corner_radius=10,
+            fg_color=COLORS["green"],
+            hover_color=COLORS["green_dark"],
             font=ctk.CTkFont(size=14, weight="bold"),
             command=self._start_sync,
         )
-        self.sync_button.pack(side="left")
+        self.sync_button.grid(row=2, column=0, sticky="ew", padx=24)
 
         ctk.CTkLabel(
-            controls,
-            text="Täglich um",
-            text_color="#5f6368",
-        ).pack(side="left", padx=(22, 8))
-        self.time_entry = ctk.CTkEntry(controls, width=76, height=36, placeholder_text="08:00")
-        self.time_entry.insert(0, "08:00")
-        self.time_entry.pack(side="left")
-        self.schedule_button = ctk.CTkButton(
-            controls,
-            text="Automatik aktivieren",
+            actions,
+            text="TÄGLICHE AUTOMATIK",
+            text_color=COLORS["muted"],
+            font=ctk.CTkFont(size=10, weight="bold"),
+        ).grid(row=3, column=0, sticky="w", padx=24, pady=(22, 8))
+        schedule_controls = ctk.CTkFrame(actions, fg_color="transparent")
+        schedule_controls.grid(row=4, column=0, sticky="ew", padx=24)
+        schedule_controls.grid_columnconfigure(1, weight=1)
+        ctk.CTkLabel(
+            schedule_controls,
+            text="Startzeit",
+            text_color=COLORS["muted"],
+            font=ctk.CTkFont(size=12),
+        ).grid(row=0, column=0, sticky="w", padx=(0, 12))
+        self.time_entry = ctk.CTkEntry(
+            schedule_controls,
+            width=82,
             height=36,
-            fg_color="#188038",
-            hover_color="#137333",
+            corner_radius=9,
+            placeholder_text="08:00",
+            fg_color=COLORS["background"],
+            border_color=COLORS["line"],
+        )
+        self.time_entry.insert(0, "08:00")
+        self.time_entry.grid(row=0, column=1, sticky="w")
+        self.schedule_button = ctk.CTkButton(
+            schedule_controls,
+            text="Aktivieren",
+            width=95,
+            height=36,
+            corner_radius=9,
+            fg_color=COLORS["green_light"],
+            hover_color="#d4e5d7",
+            text_color=COLORS["green_dark"],
             command=self._enable_schedule,
         )
-        self.schedule_button.pack(side="left", padx=(10, 0))
+        self.schedule_button.grid(row=0, column=2, padx=(10, 0))
         self.disable_schedule_button = ctk.CTkButton(
-            controls,
-            text="Deaktivieren",
-            width=105,
-            height=36,
-            fg_color="#f1f3f4",
-            hover_color="#e8eaed",
-            text_color="#3c4043",
+            actions,
+            text="Automatik deaktivieren",
+            height=32,
+            fg_color="transparent",
+            hover_color=COLORS["background"],
+            text_color=COLORS["muted"],
             command=self._disable_schedule,
         )
-        self.disable_schedule_button.pack(side="left", padx=(8, 0))
+        self.disable_schedule_button.grid(row=5, column=0, sticky="ew", padx=24, pady=(7, 12))
 
+        ctk.CTkLabel(
+            actions,
+            text="AKTIVITÄT",
+            text_color=COLORS["muted"],
+            font=ctk.CTkFont(size=10, weight="bold"),
+        ).grid(row=6, column=0, sticky="w", padx=24, pady=(4, 8))
         self.log_box = ctk.CTkTextbox(
             actions,
-            corner_radius=9,
-            fg_color="#f8fafd",
-            text_color="#3c4043",
+            corner_radius=10,
+            fg_color=COLORS["log"],
+            text_color=COLORS["ink"],
             font=ctk.CTkFont(family="Consolas", size=12),
             wrap="word",
-            height=150,
+            height=118,
+            border_width=1,
+            border_color=COLORS["line"],
         )
-        self.log_box.grid(row=2, column=0, sticky="nsew", padx=20, pady=(0, 18))
+        self.log_box.grid(row=8, column=0, sticky="nsew", padx=24, pady=(0, 24))
         self.log_box.insert(
             "end",
-            "Bereit. Die Automatik läuft über die Windows-Aufgabenplanung und benötigt kein geöffnetes VS Code.\n",
+            "Bereit. Die Automatik läuft über die Windows-Aufgabenplanung.\n",
         )
         self.log_box.configure(state="disabled")
 
         ctk.CTkLabel(
             self.content,
-            text="Windows kann den PC aus dem Energiesparmodus wecken; ausgeschaltet läuft er nicht.",
-            text_color="#70757a",
+            text="Die Synchronisierung läuft einseitig von Stud.IP zu Google Drive.",
+            text_color=COLORS["muted"],
             font=ctk.CTkFont(size=11),
-        ).grid(row=4, column=0, pady=(0, 14))
+        ).grid(row=3, column=0, columnspan=2, pady=(0, 22))
 
     def _add_entry(self, parent, row, label, show=None):
         ctk.CTkLabel(
             parent,
             text=label,
-            text_color="#5f6368",
-            font=ctk.CTkFont(size=13),
-        ).grid(row=row, column=0, sticky="w", padx=(20, 12), pady=7)
-        entry = ctk.CTkEntry(parent, height=36, show=show)
-        entry.grid(row=row, column=1, columnspan=2, sticky="ew", padx=(0, 20), pady=7)
+            text_color=COLORS["muted"],
+            font=ctk.CTkFont(size=11, weight="bold"),
+        ).grid(row=row, column=0, sticky="w", padx=24, pady=(0, 5))
+        entry = ctk.CTkEntry(
+            parent,
+            height=40,
+            corner_radius=9,
+            show=show,
+            fg_color=COLORS["background"],
+            border_color=COLORS["line"],
+            text_color=COLORS["ink"],
+        )
+        entry.grid(row=row + 1, column=0, sticky="ew", padx=24, pady=(0, 12))
         return entry
 
     def _load_configuration(self):
