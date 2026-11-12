@@ -6,7 +6,7 @@ import shutil
 import sys
 
 
-PROJECT_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 
 def bundled_credentials_path():

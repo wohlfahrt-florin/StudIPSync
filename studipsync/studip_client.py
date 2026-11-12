@@ -11,7 +11,7 @@ import time
 
 import requests
 
-from sync_paths import absolute_studip_url
+from .sync_paths import absolute_studip_url
 
 
 BASE_URL = "https://studip.uni-halle.de"

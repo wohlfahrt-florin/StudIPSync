@@ -7,7 +7,7 @@ zum Beispiel mit `StudIPClient(...)`.
 
 ## Desktop-App: Start der Oberfläche
 
-Start mit `python .\app.py` oder durch Öffnen der Windows-App:
+Start mit `python .\run_app.py` oder durch Öffnen der Windows-App:
 
 ```text
 app.py
@@ -70,10 +70,10 @@ Die drei zentralen Arbeitsobjekte entstehen **pro Synchronisierungslauf** in
 | `SyncState` | `studipsync.synchronize()` | Bereits erfolgreich synchronisierte Dateien speichern |
 
 Die Klassen implementieren ihre Aufgaben in
-[studip_client.py](../studip_client.py),
-[drive_client.py](../drive_client.py) und
-[sync_state.py](../sync_state.py). Die Ablaufsteuerung liegt in
-[studipsync.py](../studipsync.py).
+[studip_client.py](../studipsync/studip_client.py),
+[drive_client.py](../studipsync/drive_client.py) und
+[sync_state.py](../studipsync/sync_state.py). Die Ablaufsteuerung liegt in
+[sync.py](../studipsync/sync.py).
 
 ### Klick auf „Ordner auswählen“
 
@@ -110,7 +110,7 @@ Beim Einrichten der Automatik erzeugt `_enable_schedule()` eine Windows-Aufgabe.
 Windows diesen Befehl selbstständig; die Oberfläche und `mainloop()` laufen
 dabei nicht.
 
-Auch `python .\studipsync.py` startet direkt den Synchronisationsablauf:
+ Auch `python -m studipsync.sync` startet direkt den Synchronisationsablauf:
 
 ```text
 studipsync.py
@@ -120,7 +120,7 @@ studipsync.py
 
 ## Terminbeobachter
 
-`python .\calendar_watch.py` ist ein unabhängiger Kommandozeilenablauf. Er
+`python -m studipsync.calendar_watch` ist ein unabhängiger Kommandozeilenablauf. Er
 erstellt einen `StudIPClient`, liest Kurse und Termine und vergleicht sie mit
 dem gespeicherten Terminstand. Er verwendet weder die Desktop-App noch die
 Google-Drive-Synchronisierung:

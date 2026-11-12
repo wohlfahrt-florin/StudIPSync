@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from app_paths import data_dir
+from studipsync.app_paths import data_dir
 
 
 class PackagedDataDirectoryTests(unittest.TestCase):
@@ -23,8 +23,8 @@ class PackagedDataDirectoryTests(unittest.TestCase):
 
             with (
                 patch.dict(os.environ, {"LOCALAPPDATA": str(local_app_data)}),
-                patch("app_paths.sys.executable", str(executable)),
-                patch("app_paths.sys.frozen", True, create=True),
+                patch("studipsync.app_paths.sys.executable", str(executable)),
+                patch("studipsync.app_paths.sys.frozen", True, create=True),
             ):
                 result = data_dir()
 

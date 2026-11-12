@@ -23,7 +23,7 @@ if (-not (Test-Path $credentials)) {
     --collect-all customtkinter `
     --add-data "$credentials;." `
     --add-data "$(Join-Path $projectRoot 'assets');assets" `
-    (Join-Path $projectRoot "app.py")
+    (Join-Path $projectRoot "run_app.py")
 
 if ($LASTEXITCODE -ne 0) {
     throw "PyInstaller wurde mit Exitcode $LASTEXITCODE beendet."

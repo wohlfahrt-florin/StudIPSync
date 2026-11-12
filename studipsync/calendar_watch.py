@@ -9,10 +9,10 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from studip_client import StudIPClient, TARGET_SEMESTER
+from .studip_client import StudIPClient, TARGET_SEMESTER
 
 
-PROJECT_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = Path(__file__).resolve().parents[1]
 STATE_PATH = PROJECT_DIR / "calendar_watch_state.json"
 
 

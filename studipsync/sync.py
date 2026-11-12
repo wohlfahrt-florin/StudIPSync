@@ -15,11 +15,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from app_paths import PROJECT_DIR
-from drive_client import DriveClient
-from studip_client import StudIPClient, TARGET_SEMESTER
-from sync_paths import temp_path_for
-from sync_state import SyncState
+from .app_paths import PROJECT_DIR
+from .drive_client import DriveClient
+from .studip_client import StudIPClient, TARGET_SEMESTER
+from .sync_paths import temp_path_for
+from .sync_state import SyncState
 
 
 def download_to_temp(studip, file_ref, course_name, project_dir=PROJECT_DIR):

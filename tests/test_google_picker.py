@@ -5,8 +5,8 @@ from unittest.mock import patch
 
 from dotenv import dotenv_values
 
-from app import save_configuration
-from drive_client import parse_picker_callback
+from studipsync.app import save_configuration
+from studipsync.drive_client import parse_picker_callback
 
 
 class PickerCallbackTests(unittest.TestCase):
@@ -49,8 +49,8 @@ class SaveConfigurationTests(unittest.TestCase):
             credentials = root / "credentials.json"
             credentials.write_text('{"installed": {}}', encoding="utf-8")
 
-            with patch("app.data_dir", return_value=data_directory):
-                with patch("app.bundled_credentials_path", return_value=credentials):
+            with patch("studipsync.app.data_dir", return_value=data_directory):
+                with patch("studipsync.app.bundled_credentials_path", return_value=credentials):
                     save_configuration("student", "secret", "")
 
             values = dotenv_values(data_directory / ".env")

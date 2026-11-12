@@ -19,7 +19,7 @@
 				"docker-build"
 			],
 			"python": {
-				"file": "studip_client.py"
+				"file": "studipsync/studip_client.py"
 			}
 		}
 	]

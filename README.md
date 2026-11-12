@@ -6,14 +6,32 @@ Google-Drive-Ordner – ein Unterordner pro Kurs.
 > Richtung: **Stud.IP → Google Drive**. Änderungen im Google Drive werden nicht
 > nach Stud.IP zurückgeschrieben.
 
+## Struktur
+
+```text
+StudIPSync/
+├─ studipsync/       Python-Anwendung als Paket
+├─ tests/             Automatisierte Tests
+├─ scripts/           Manuelle API- und Integrationstests
+├─ site/              Statische Website
+├─ packaging/         Windows- und Docker-Builds
+├─ docs/              Ablauf- und Produktionsdokumentation
+├─ assets/            Icons und Programmressourcen
+├─ run_app.py         Einstiegspunkt für die Desktop-App
+└─ requirements.txt   Python-Abhängigkeiten
+```
+
+Die Laufzeitdaten (`.env`, OAuth-Dateien, `temp/`, `sync_state.json`) bleiben
+im Projektstamm, werden aber nicht versioniert.
+
 ## Dateien
 
 | Datei | Zweck |
 |---|---|
-| `studipsync.py` | Einstiegspunkt und Ablaufsteuerung der Synchronisation |
-| `studip_client.py` | Authentifizierter Zugriff auf die Stud.IP-JSON-API |
-| `drive_client.py` | Google-OAuth, Kursordner und Uploads |
-| `sync_state.py` | Status bereits hochgeladener Stud.IP-Dateien |
+| `studipsync/sync.py` | Einstiegspunkt und Ablaufsteuerung der Synchronisation |
+| `studipsync/studip_client.py` | Authentifizierter Zugriff auf die Stud.IP-JSON-API |
+| `studipsync/drive_client.py` | Google-OAuth, Kursordner und Uploads |
+| `studipsync/sync_state.py` | Status bereits hochgeladener Stud.IP-Dateien |
 | `calendar_watch.py` | Meldet neue/geänderte Stud.IP-Termine zur manuellen Prüfung |
 | `tests/` | Automatisierte Tests |
 | `scripts/` | Manuelle API- und Integrationsskripte |
@@ -53,7 +71,7 @@ Die automatisierten Tests startest du aus dem Projektordner mit:
 
 ```powershell
 \.venv\Scripts\python.exe .\scripts\StudIP_API_Test.py
-\.venv\Scripts\python.exe .\studipsync.py
+\.venv\Scripts\python.exe -m studipsync.sync
 ```
 
 Die Synchronisation berücksichtigt die 22 Kurse, die das WiSe 2026/27
@@ -66,7 +84,7 @@ erkannt. Dateien im Drive werden weder gelöscht noch zurück nach Stud.IP
 Nach der Installation der Abhängigkeiten kannst du die Oberfläche direkt starten:
 
 ```powershell
-\.venv\Scripts\python.exe .\app.py
+\.venv\Scripts\python.exe .\run_app.py
 ```
 
 In der App trägst du Stud.IP-Kennung und Passwort ein und wählst den Google-
@@ -116,8 +134,8 @@ Termin für deine Seminargruppe 9 gilt. Das Programm trägt nichts in Google
 Calendar ein.
 
 ```powershell
-\.venv\Scripts\python.exe .\calendar_watch.py --initialize
-\.venv\Scripts\python.exe .\calendar_watch.py
+\.venv\Scripts\python.exe -m studipsync.calendar_watch --initialize
+\.venv\Scripts\python.exe -m studipsync.calendar_watch
 ```
 
 `--report-only` zeigt Änderungen ohne Rückfrage und ohne den Status

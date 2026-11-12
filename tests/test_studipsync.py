@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from sync_paths import absolute_studip_url, sanitize_filename, temp_path_for
+from studipsync.sync_paths import absolute_studip_url, sanitize_filename, temp_path_for
 
 
 class SanitizeFilenameTests(unittest.TestCase):

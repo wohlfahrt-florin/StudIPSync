@@ -14,10 +14,10 @@ from dotenv import dotenv_values, set_key
 from PIL import Image
 from tkinter import messagebox
 
-from app_paths import bundled_credentials_path, data_dir
-from drive_client import pick_drive_folder
-from studipsync import synchronize
-from task_scheduler import create_daily_task, delete_daily_task
+from .app_paths import PROJECT_DIR, bundled_credentials_path, data_dir
+from .drive_client import pick_drive_folder
+from .sync import synchronize
+from .task_scheduler import create_daily_task, delete_daily_task
 
 
 APP_NAME = "StudIPSync"
@@ -38,7 +38,7 @@ def runtime_command():
     """Return the command to run this app's non-interactive sync entry point."""
     if getattr(sys, "frozen", False):
         return sys.executable, None
-    return sys.executable, str(Path(__file__).resolve())
+    return sys.executable, str(PROJECT_DIR / "run_app.py")
 
 
 def save_configuration(username, password, folder_id, folder_name=""):
@@ -116,7 +116,7 @@ class StudIPSyncApp(ctk.CTk):
 
     def _set_window_icon(self):
         """Use the shared brand icon in development and in the packaged app."""
-        base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+        base = Path(getattr(sys, "_MEIPASS", PROJECT_DIR))
         icon_path = base / "assets" / "studipsync.ico"
         if icon_path.is_file():
             try:
@@ -136,7 +136,7 @@ class StudIPSyncApp(ctk.CTk):
         header = ctk.CTkFrame(self.content, fg_color="transparent", height=66)
         header.grid(row=0, column=0, columnspan=2, sticky="ew", padx=32, pady=(18, 12))
         header.grid_columnconfigure(1, weight=1)
-        logo_path = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent)) / "assets" / "icon-64.png"
+        logo_path = Path(getattr(sys, "_MEIPASS", PROJECT_DIR)) / "assets" / "icon-64.png"
         self.logo_image = ctk.CTkImage(light_image=Image.open(logo_path), size=(38, 38))
         ctk.CTkLabel(
             header,

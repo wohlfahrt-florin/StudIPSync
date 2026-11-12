@@ -4,6 +4,6 @@ services:
     build:
       context: ../..
       dockerfile: packaging/docker/Dockerfile
-    command: ["sh", "-c", "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 studip_client.py "]
+    command: ["sh", "-c", "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 -m studipsync.studip_client "]
     ports:
       - 5678:5678

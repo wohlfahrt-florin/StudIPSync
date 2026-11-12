@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import patch
 
-from calendar_watch import diff_snapshots, event_fingerprint
-from studip_client import StudIPClient
+from studipsync.calendar_watch import diff_snapshots, event_fingerprint
+from studipsync.studip_client import StudIPClient
 
 
 class EventFingerprintTests(unittest.TestCase):
@@ -60,7 +60,7 @@ class StudIPRetryTests(unittest.TestCase):
                 return next(self.responses)
 
         session = Session()
-        with patch("studip_client.time.sleep"):
+        with patch("studipsync.studip_client.time.sleep"):
             response = StudIPClient._get_response(session, "https://example.test")
 
         self.assertEqual(response.status_code, 200)

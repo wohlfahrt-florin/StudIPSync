@@ -1,6 +1,6 @@
 import unittest
 
-from task_scheduler import create_task_script
+from studipsync.task_scheduler import create_task_script
 
 
 class CreateTaskScriptTests(unittest.TestCase):
