@@ -35,6 +35,15 @@ COLORS = {
 }
 
 
+def drive_folder_label(folder_id, folder_name):
+    """Return a user-facing folder label without exposing the internal ID."""
+    if not folder_id:
+        return "Noch kein Ordner ausgewählt"
+    if folder_name and folder_name.strip():
+        return folder_name.strip()
+    return "Ordnerauswahl erneut erforderlich"
+
+
 def runtime_command():
     """Return the command to run this app's non-interactive sync entry point."""
     if getattr(sys, "frozen", False):
@@ -432,10 +441,10 @@ class StudIPSyncApp(ctk.CTk):
         values = dotenv_values(directory / ".env")
         self.username_entry.insert(0, values.get("STUDIP_USER") or "")
         self.password_entry.insert(0, values.get("STUDIP_PASSWORD") or "")
-        self.folder_id = values.get("DRIVE_ROOT_FOLDER_ID") or ""
-        self.folder_name = values.get("DRIVE_ROOT_FOLDER_NAME") or ""
+        self.folder_id = (values.get("DRIVE_ROOT_FOLDER_ID") or "").strip()
+        self.folder_name = (values.get("DRIVE_ROOT_FOLDER_NAME") or "").strip()
         self.folder_label.configure(
-            text=self.folder_name or self.folder_id or "Noch kein Ordner ausgewählt"
+            text=drive_folder_label(self.folder_id, self.folder_name)
         )
         credentials_file = directory / "credentials.json"
         if credentials_file.is_file():
@@ -447,7 +456,12 @@ class StudIPSyncApp(ctk.CTk):
             else:
                 self.credentials_label.configure(text="Google-OAuth-Konfiguration fehlt")
         self.needs_setup = not all(
-            (values.get("STUDIP_USER"), values.get("STUDIP_PASSWORD"), self.folder_id)
+            (
+                values.get("STUDIP_USER"),
+                values.get("STUDIP_PASSWORD"),
+                self.folder_id.strip(),
+                self.folder_name.strip(),
+            )
         )
 
     def _show_initial_setup(self):
@@ -492,7 +506,7 @@ class StudIPSyncApp(ctk.CTk):
         self.setup_folder_name = self.folder_name
         self.setup_folder_label = ctk.CTkLabel(
             frame,
-            text=self.folder_name or "Noch kein Google-Drive-Ordner ausgewählt",
+            text=drive_folder_label(self.setup_folder_id, self.setup_folder_name),
             text_color=COLORS["muted"],
             anchor="w",
         )
@@ -508,7 +522,11 @@ class StudIPSyncApp(ctk.CTk):
             frame,
             text="Einrichtung abschließen",
             height=40,
-            state="normal" if self.setup_folder_id else "disabled",
+            state=(
+                "normal"
+                if self.setup_folder_id and self.setup_folder_name.strip()
+                else "disabled"
+            ),
             fg_color=COLORS["green"],
             hover_color=COLORS["green_dark"],
             command=self._finish_initial_setup,
@@ -548,12 +566,26 @@ class StudIPSyncApp(ctk.CTk):
         if error:
             messagebox.showerror("Google-Ordnerauswahl", error, parent=self.setup_dialog)
             return
+        if not folder_id or not folder_name or not folder_name.strip():
+            messagebox.showerror(
+                "Google-Ordnerauswahl",
+                "Google hat keinen gültigen Ordnernamen zurückgegeben. Bitte erneut auswählen.",
+                parent=self.setup_dialog,
+            )
+            return
         self.setup_folder_id = folder_id
         self.setup_folder_name = folder_name
-        self.setup_folder_label.configure(text=folder_name)
+        self.setup_folder_label.configure(text=drive_folder_label(folder_id, folder_name))
         self.setup_save_button.configure(state="normal")
 
     def _finish_initial_setup(self):
+        if not self.setup_folder_id or not self.setup_folder_name.strip():
+            messagebox.showerror(
+                "Einrichtung",
+                "Bitte zuerst einen Google-Drive-Ordner auswählen.",
+                parent=self.setup_dialog,
+            )
+            return
         try:
             save_configuration(
                 self.setup_username_entry.get(),
@@ -571,7 +603,7 @@ class StudIPSyncApp(ctk.CTk):
         self.password_entry.insert(0, self.setup_password_entry.get())
         self.folder_id = self.setup_folder_id
         self.folder_name = self.setup_folder_name
-        self.folder_label.configure(text=self.folder_name)
+        self.folder_label.configure(text=drive_folder_label(self.folder_id, self.folder_name))
         self.credentials_label.configure(text="Google-Zugangsdaten gespeichert")
         self.needs_setup = False
         self.setup_dialog.grab_release()
@@ -615,7 +647,7 @@ class StudIPSyncApp(ctk.CTk):
             return
         if self._save_settings(show_confirmation=False) is None:
             return
-        if not self.folder_id:
+        if not self.folder_id or not self.folder_name.strip():
             messagebox.showerror(
                 "Einstellungen",
                 "Bitte zuerst einen Google-Drive-Zielordner auswählen.",
@@ -699,10 +731,19 @@ class StudIPSyncApp(ctk.CTk):
                     if error:
                         self.status_label.configure(text="Ordnerauswahl fehlgeschlagen")
                         messagebox.showerror("Google-Ordnerauswahl", error, parent=self)
+                    elif not folder_id or not folder_name or not folder_name.strip():
+                        self.status_label.configure(text="Ordnerauswahl fehlgeschlagen")
+                        messagebox.showerror(
+                            "Google-Ordnerauswahl",
+                            "Google hat keinen gültigen Ordnernamen zurückgegeben. Bitte erneut auswählen.",
+                            parent=self,
+                        )
                     else:
                         self.folder_id = folder_id
                         self.folder_name = folder_name
-                        self.folder_label.configure(text=folder_name)
+                        self.folder_label.configure(
+                            text=drive_folder_label(folder_id, folder_name)
+                        )
                         if self._save_settings(show_confirmation=False) is not None:
                             self.status_label.configure(text="Google-Ordner ausgewählt")
                 else:
