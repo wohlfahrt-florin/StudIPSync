@@ -21,8 +21,6 @@ svg { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; strok
 .button-primary:hover { background: var(--green-dark); border-color: var(--green-dark); }
 .button-secondary { color: var(--ink); background: transparent; border-color: #cbd4cc; }
 .button-secondary:hover { color: var(--green); border-color: var(--green); }
-.button-tertiary { color: var(--muted); border-color: transparent; }
-.button-tertiary:hover { color: var(--green); background: #edf3ee; }
 .site-footer { flex: 0 0 auto; color: var(--muted); border-top: 1px solid var(--line); }
 .footer-bottom { display: flex; min-height: 58px; align-items: center; justify-content: space-between; gap: 24px; font-size: .72rem; }
 .footer-links { display: flex; gap: 24px; }
