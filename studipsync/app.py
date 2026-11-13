@@ -416,6 +416,136 @@ class StudIPSyncApp(ctk.CTk):
                 self.credentials_label.configure(text="Google-Zugangsdaten integriert")
             else:
                 self.credentials_label.configure(text="Google-OAuth-Konfiguration fehlt")
+        self.needs_setup = not all(
+            (values.get("STUDIP_USER"), values.get("STUDIP_PASSWORD"), self.folder_id)
+        )
+
+    def _show_initial_setup(self):
+        if not self.needs_setup:
+            return
+
+        dialog = ctk.CTkToplevel(self)
+        self.setup_dialog = dialog
+        dialog.title("StudIPSync einrichten")
+        dialog.geometry("480x430")
+        dialog.resizable(False, False)
+        dialog.transient(self)
+        dialog.grab_set()
+
+        frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        frame.pack(fill="both", expand=True, padx=28, pady=24)
+        ctk.CTkLabel(
+            frame,
+            text="StudIPSync einrichten",
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color=COLORS["ink"],
+        ).pack(anchor="w")
+        ctk.CTkLabel(
+            frame,
+            text="Einmal Stud.IP anmelden und einen Google-Drive-Ordner auswählen.",
+            text_color=COLORS["muted"],
+            justify="left",
+            wraplength=420,
+        ).pack(anchor="w", pady=(4, 20))
+
+        ctk.CTkLabel(frame, text="Stud.IP-Kennung", anchor="w").pack(fill="x")
+        self.setup_username_entry = ctk.CTkEntry(frame, height=36)
+        self.setup_username_entry.pack(fill="x", pady=(3, 12))
+        self.setup_username_entry.insert(0, self.username_entry.get())
+
+        ctk.CTkLabel(frame, text="Stud.IP-Passwort", anchor="w").pack(fill="x")
+        self.setup_password_entry = ctk.CTkEntry(frame, height=36, show="•")
+        self.setup_password_entry.pack(fill="x", pady=(3, 14))
+        self.setup_password_entry.insert(0, self.password_entry.get())
+
+        self.setup_folder_id = self.folder_id
+        self.setup_folder_name = self.folder_name
+        self.setup_folder_label = ctk.CTkLabel(
+            frame,
+            text=self.folder_name or "Noch kein Google-Drive-Ordner ausgewählt",
+            text_color=COLORS["muted"],
+            anchor="w",
+        )
+        self.setup_folder_label.pack(fill="x", pady=(0, 8))
+        self.setup_connect_button = ctk.CTkButton(
+            frame,
+            text="Google Drive verbinden",
+            height=40,
+            command=self._setup_choose_drive_folder,
+        )
+        self.setup_connect_button.pack(fill="x")
+        self.setup_save_button = ctk.CTkButton(
+            frame,
+            text="Einrichtung abschließen",
+            height=40,
+            state="normal" if self.setup_folder_id else "disabled",
+            fg_color=COLORS["green"],
+            hover_color=COLORS["green_dark"],
+            command=self._finish_initial_setup,
+        )
+        self.setup_save_button.pack(fill="x", pady=(12, 0))
+
+    def _setup_choose_drive_folder(self):
+        username = self.setup_username_entry.get().strip()
+        password = self.setup_password_entry.get()
+        if not username or not password:
+            messagebox.showerror(
+                "Stud.IP-Anmeldung",
+                "Bitte zuerst Stud.IP-Kennung und Passwort eintragen.",
+                parent=self.setup_dialog,
+            )
+            return
+        try:
+            save_configuration(username, password, "")
+        except (OSError, ValueError) as error:
+            messagebox.showerror("Einrichtung", str(error), parent=self.setup_dialog)
+            return
+
+        self.setup_connect_button.configure(state="disabled", text="Browser wird geöffnet …")
+
+        def worker():
+            try:
+                result = pick_drive_folder(data_dir())
+            except Exception as error:
+                self.after(0, lambda: self._setup_folder_result(None, None, str(error)))
+            else:
+                self.after(0, lambda: self._setup_folder_result(*result, None))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _setup_folder_result(self, folder_id, folder_name, error):
+        self.setup_connect_button.configure(state="normal", text="Google Drive verbinden")
+        if error:
+            messagebox.showerror("Google-Ordnerauswahl", error, parent=self.setup_dialog)
+            return
+        self.setup_folder_id = folder_id
+        self.setup_folder_name = folder_name
+        self.setup_folder_label.configure(text=folder_name)
+        self.setup_save_button.configure(state="normal")
+
+    def _finish_initial_setup(self):
+        try:
+            save_configuration(
+                self.setup_username_entry.get(),
+                self.setup_password_entry.get(),
+                self.setup_folder_id,
+                self.setup_folder_name,
+            )
+        except (OSError, ValueError) as error:
+            messagebox.showerror("Einrichtung", str(error), parent=self.setup_dialog)
+            return
+
+        self.username_entry.delete(0, "end")
+        self.username_entry.insert(0, self.setup_username_entry.get())
+        self.password_entry.delete(0, "end")
+        self.password_entry.insert(0, self.setup_password_entry.get())
+        self.folder_id = self.setup_folder_id
+        self.folder_name = self.setup_folder_name
+        self.folder_label.configure(text=self.folder_name)
+        self.credentials_label.configure(text="Google-Zugangsdaten gespeichert")
+        self.needs_setup = False
+        self.setup_dialog.grab_release()
+        self.setup_dialog.destroy()
 
     def _save_settings(self, show_confirmation=True):
         try:
