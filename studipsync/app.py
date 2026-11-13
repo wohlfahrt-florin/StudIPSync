@@ -100,8 +100,8 @@ class StudIPSyncApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("StudIPSync")
-        self.geometry("940x680")
-        self.minsize(860, 620)
+        self.geometry("900x560")
+        self.minsize(800, 520)
         self.configure(fg_color=COLORS["background"])
         self._set_window_icon()
         self.event_queue = queue.Queue()
@@ -112,6 +112,7 @@ class StudIPSyncApp(ctk.CTk):
 
         self._build_ui()
         self._load_configuration()
+        self.after(100, self._show_initial_setup)
         self.after(150, self._process_events)
 
     def _set_window_icon(self):
@@ -131,7 +132,7 @@ class StudIPSyncApp(ctk.CTk):
         self.content.grid(row=0, column=0, sticky="nsew")
         self.content.grid_columnconfigure(0, weight=1, uniform="content")
         self.content.grid_columnconfigure(1, weight=1, uniform="content")
-        self.content.grid_rowconfigure(2, weight=1)
+        self.content.grid_rowconfigure(1, weight=1)
 
         header = ctk.CTkFrame(self.content, fg_color="transparent", height=66)
         header.grid(row=0, column=0, columnspan=2, sticky="ew", padx=32, pady=(18, 12))
@@ -191,6 +192,7 @@ class StudIPSyncApp(ctk.CTk):
             font=ctk.CTkFont(size=12),
             text_color="#c8d8cc",
         ).grid(row=1, column=0, sticky="w", padx=22, pady=(0, 14))
+        self.status_card.grid_remove()
 
         config = ctk.CTkFrame(
             self.content,
@@ -199,7 +201,7 @@ class StudIPSyncApp(ctk.CTk):
             border_width=1,
             border_color=COLORS["line"],
         )
-        config.grid(row=2, column=0, sticky="nsew", padx=(32, 8), pady=(0, 16))
+        config.grid(row=1, column=0, sticky="nsew", padx=(32, 8), pady=(0, 16))
         config.grid_columnconfigure(0, weight=1)
         ctk.CTkLabel(
             config,
@@ -276,7 +278,7 @@ class StudIPSyncApp(ctk.CTk):
             border_width=1,
             border_color=COLORS["line"],
         )
-        actions.grid(row=2, column=1, sticky="nsew", padx=(8, 32), pady=(0, 16))
+        actions.grid(row=1, column=1, sticky="nsew", padx=(8, 32), pady=(0, 16))
         actions.grid_columnconfigure(0, weight=1)
         actions.grid_rowconfigure(7, weight=1)
         ctk.CTkLabel(
