@@ -9,7 +9,13 @@ Synchronisiert neue Dateien aus Stud.IP-Kursen nach Google Drive.
 Copy-Item .env.example .env
 ```
 
-Lege `credentials.json` (Google-OAuth-Desktop-App mit aktivierter Drive API) ins Projektverzeichnis. Beim ersten Start werden Stud.IP-Zugang und Zielordner abgefragt.
+Für einen Start aus dem Quellcode benötigt der Projektordner `credentials.json`
+mit der OAuth-Desktop-App-Konfiguration des Projekts. In der veröffentlichten
+EXE ist diese App-Konfiguration bereits enthalten; Nutzer müssen keine eigene
+`credentials.json` besorgen. Beim ersten Start werden Stud.IP-Zugangsdaten
+abgefragt. Anschließend meldet sich jeder im Browser mit dem eigenen
+Google-Konto an und wählt den Zielordner im Drive-Picker aus. Das persönliche
+Google-Anmeldungstoken wird lokal gespeichert.
 
 ## Start
 

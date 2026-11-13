@@ -95,7 +95,13 @@ def pick_drive_folder(project_dir):
     folder = drive.files().get(fileId=folder_id, fields="id,name,mimeType").execute()
     if folder.get("mimeType") != "application/vnd.google-apps.folder":
         raise ValueError("Das ausgewaehlte Element ist kein Google-Drive-Ordner.")
-    return folder["id"], folder["name"]
+    selected_folder_id = folder.get("id")
+    selected_folder_name = folder.get("name")
+    if not selected_folder_id or not selected_folder_name:
+        raise ValueError(
+            "Google hat keine vollstaendigen Ordnerinformationen zurueckgegeben."
+        )
+    return selected_folder_id, selected_folder_name
 
 
 class DriveClient:

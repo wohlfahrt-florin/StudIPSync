@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from dotenv import dotenv_values
 
-from studipsync.app import save_configuration
+from studipsync.app import drive_folder_label, save_configuration
 from studipsync.drive_client import parse_picker_callback
 
 
@@ -63,6 +63,53 @@ class SaveConfigurationTests(unittest.TestCase):
                 (data_directory / "credentials.json").read_text(encoding="utf-8"),
                 '{"installed": {}}',
             )
+
+    def test_saves_selected_folder_id_and_name(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            data_directory = root / "data"
+            data_directory.mkdir()
+            credentials = root / "credentials.json"
+            credentials.write_text('{"installed": {}}', encoding="utf-8")
+
+            with patch("studipsync.app.data_dir", return_value=data_directory):
+                with patch("studipsync.app.bundled_credentials_path", return_value=credentials):
+                    save_configuration(
+                        "student",
+                        "secret",
+                        "internal-folder-id",
+                        "Vorlesung",
+                    )
+
+            values = dotenv_values(data_directory / ".env")
+            self.assertEqual(values["DRIVE_ROOT_FOLDER_ID"], "internal-folder-id")
+            self.assertEqual(values["DRIVE_ROOT_FOLDER_NAME"], "Vorlesung")
+
+
+class DriveFolderLabelTests(unittest.TestCase):
+    def test_displays_folder_name_instead_of_internal_id(self):
+        self.assertEqual(
+            drive_folder_label("internal-folder-id", "Vorlesung"),
+            "Vorlesung",
+        )
+
+    def test_never_displays_id_when_folder_name_is_missing(self):
+        self.assertEqual(
+            drive_folder_label("internal-folder-id", ""),
+            "Ordnerauswahl erneut erforderlich",
+        )
+
+    def test_displays_empty_selection_state_without_folder_id(self):
+        self.assertEqual(
+            drive_folder_label("", ""),
+            "Noch kein Ordner ausgewählt",
+        )
+
+    def test_does_not_show_stale_folder_name_without_folder_id(self):
+        self.assertEqual(
+            drive_folder_label("", "Vorlesung"),
+            "Noch kein Ordner ausgewählt",
+        )
 
 
 if __name__ == "__main__":

@@ -83,12 +83,17 @@ Klick auf „Ordner auswählen“
    ├─ Einstellungen speichern
    └─ Hintergrund-Thread
       └─ pick_drive_folder(data_dir())
-         └─ Google-OAuth und Browser-Ordnerauswahl
+         └─ Google-Anmeldung und Drive-Ordnerauswahl im Browser
    └─ Ergebnis über Event-Queue an _process_events()
 ```
 
-Für diese Auswahl wird nicht erst ein `DriveClient` erzeugt. `pick_drive_folder`
-ist ein eigener Ablauf im Modul [drive_client.py](../drive_client.py).
+Für diese Auswahl wird nicht erst ein `DriveClient` erzeugt.
+`pick_drive_folder` ist ein eigener Ablauf im Modul
+[drive_client.py](../studipsync/drive_client.py). Die ausgewählte Ordner-ID
+wird intern gespeichert; in der Oberfläche wird der Ordnername angezeigt.
+Die OAuth-App-Konfiguration wird aus der EXE in den lokalen App-Datenordner
+kopiert. Das persönliche Google-Anmeldungstoken wird separat als `token.json`
+dort gespeichert, sodass jedes Windows-Konto sein eigenes Google-Konto nutzt.
 
 ## Synchronisierung ohne Oberfläche
 
