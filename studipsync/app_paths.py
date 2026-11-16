@@ -41,3 +41,16 @@ def data_dir():
             if source.is_file() and not destination.exists():
                 shutil.copy2(source, destination)
     return path
+
+
+def clear_user_data(directory):
+    """Remove saved account data, sync history, logs, and downloaded temp files."""
+    directory = Path(directory)
+    for filename in (".env", "token.json", "sync_state.json", "sync.log"):
+        path = directory / filename
+        if path.exists():
+            path.unlink()
+
+    temp_directory = directory / "temp"
+    if temp_directory.exists():
+        shutil.rmtree(temp_directory)

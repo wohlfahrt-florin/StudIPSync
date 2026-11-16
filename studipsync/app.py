@@ -15,7 +15,7 @@ from dotenv import dotenv_values, set_key
 from PIL import Image
 from tkinter import BooleanVar, messagebox
 
-from .app_paths import PROJECT_DIR, bundled_credentials_path, data_dir
+from .app_paths import PROJECT_DIR, bundled_credentials_path, clear_user_data, data_dir
 from .drive_client import pick_drive_folder
 from .sync import synchronize
 from .task_scheduler import create_daily_task, daily_task_is_enabled, delete_daily_task
@@ -256,6 +256,21 @@ class StudIPSyncApp(ctk.CTk):
             command=self._show_log,
         )
         self.log_button.grid(row=0, column=3, rowspan=2, sticky="e", padx=(8, 0))
+        self.clear_data_button = ctk.CTkButton(
+            header,
+            text="🗑",
+            width=42,
+            height=36,
+            corner_radius=10,
+            fg_color=COLORS["red_light"],
+            hover_color=COLORS["red_hover"],
+            text_color=COLORS["red"],
+            font=ctk.CTkFont(size=18),
+            command=self._clear_user_data,
+        )
+        self.clear_data_button.grid(
+            row=0, column=4, rowspan=2, sticky="e", padx=(8, 0)
+        )
 
         self.status_card = ctk.CTkFrame(
             self.content,
@@ -449,6 +464,61 @@ class StudIPSyncApp(ctk.CTk):
         else:
             log_box.insert("end", "Noch keine neuen Dateien synchronisiert.\n")
         log_box.configure(state="disabled")
+
+    def _clear_user_data(self):
+        if self.is_syncing:
+            messagebox.showwarning(
+                "Daten löschen",
+                "Bitte warte, bis die laufende Synchronisierung abgeschlossen ist.",
+                parent=self,
+            )
+            return
+        confirmed = messagebox.askyesno(
+            "Alle App-Daten löschen?",
+            "Gespeicherte Stud.IP-Anmeldedaten, Google-Anmeldung und Ordnerauswahl, "
+            "Synchronisationshistorie, Logs und lokale temporäre Downloads werden "
+            "gelöscht. Die tägliche Aufgabe wird ebenfalls entfernt.\n\n"
+            "Bereits hochgeladene Dateien in Google Drive bleiben erhalten. "
+            "Die App-OAuth-Konfiguration bleibt bestehen.\n\n"
+            "Möchtest du fortfahren?",
+            icon="warning",
+            parent=self,
+        )
+        if not confirmed:
+            return
+
+        try:
+            delete_daily_task()
+            clear_user_data(data_dir())
+        except (OSError, subprocess.CalledProcessError) as error:
+            details = (
+                getattr(error, "stderr", None)
+                or getattr(error, "stdout", None)
+                or str(error)
+            )
+            messagebox.showerror("Daten löschen", details, parent=self)
+            return
+
+        if getattr(self, "log_dialog", None) is not None and self.log_dialog.winfo_exists():
+            self.log_dialog.destroy()
+            self.log_dialog = None
+        self._set_schedule_state(False)
+        self.username = ""
+        self.password = ""
+        self.folder_id = ""
+        self.folder_name = ""
+        self.needs_setup = True
+        self.log_box.configure(state="normal")
+        self.log_box.delete("1.0", "end")
+        self.log_box.insert("end", "App-Daten gelöscht. Bitte neu einrichten.\n")
+        self.log_box.configure(state="disabled")
+        messagebox.showinfo(
+            "Daten gelöscht",
+            "Die App-Daten wurden gelöscht. Bitte gib deine Stud.IP-Daten ein "
+            "und wähle deinen Google-Drive-Ordner erneut aus.",
+            parent=self,
+        )
+        self._show_initial_setup()
 
     def _add_entry(self, parent, row, label, show=None):
         ctk.CTkLabel(
