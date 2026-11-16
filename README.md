@@ -1,7 +1,3 @@
-# Stud.IPSync v1.0.0
-
-## Schnellstart
-
 1. **[Stud.IPSync v1.0.0 herunterladen](https://github.com/wohlfahrt-florin/StudIPSync/releases/tag/v1.0.0)**
 2. **Bei Stud.IP anmelden**, wenn die Anwendung danach fragt.
 3. **Mit Google anmelden** und den Zielordner in Google Drive auswählen.
