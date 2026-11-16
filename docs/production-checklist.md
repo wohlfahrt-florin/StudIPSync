@@ -21,14 +21,18 @@
 - [ ] `credentials.json` nicht als lose Datei committen oder verteilen.
 - [ ] Die OAuth-Desktop-App-Konfiguration `credentials.json` für den Build
       bereitstellen; sie wird in die EXE eingebettet.
-- [ ] `packaging/windows/build_windows.ps1` ausführen.
-- [ ] Die erzeugte `dist/StudIPSync.exe` auf einem zweiten Windows-PC testen.
+- [ ] Inno Setup 6 installieren und `ISCC.exe` zum `PATH` hinzufügen oder am
+      Standardinstallationsort installieren.
+- [ ] `packaging/windows/build_windows.ps1` ausführen; es erzeugt die EXE und
+      `dist/StudIPSync-Setup-1.0.0.exe`.
+- [ ] Den Installer auf einem zweiten Windows-PC installieren, starten und
+      über Windows **Installierte Apps** wieder deinstallieren.
 - [ ] Prüfen, dass ein zweites Windows-Konto sich mit einem eigenen Google-
       Konto anmelden und einen eigenen Drive-Ordner auswählen kann.
 - [ ] Mit einem Test-Drive-Ordner synchronisieren.
 - [ ] Erneuten Lauf testen: bereits synchronisierte Dateien dürfen nicht erneut
       hochgeladen werden.
-- [ ] Erst danach die EXE an Freunde verteilen.
+- [ ] Erst danach den Installer als Release-Asset verteilen.
 
 ## Google-Drive-Auswahl
 
@@ -41,3 +45,12 @@ kopiert; sie ist nicht das persönliche Google-Konto. Die Anmeldung jedes
 Nutzers erzeugt separat ein `token.json` in `%LOCALAPPDATA%\StudIPSync`.
 Dadurch bleiben Tokens und Einstellungen pro Windows-Konto getrennt. Nach
 Änderungen muss eine neue EXE gebaut und als neues Release verteilt werden.
+
+## Windows-Installer
+
+`packaging/windows/StudIPSync.iss` definiert einen Inno Setup-Installer für
+den aktuellen Windows-Benutzer. Er erstellt einen Startmenü-Eintrag und bietet
+optional eine Desktopverknüpfung an. Die Deinstallation entfernt die
+geplante Aufgabe, bewahrt aber persönliche Einstellungen unter
+`%LOCALAPPDATA%\StudIPSync`; diese können vor der Deinstallation über den
+Papierkorb-Button in der App gelöscht werden.
