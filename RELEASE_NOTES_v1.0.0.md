@@ -14,15 +14,13 @@ Stud.IPSync synchronisiert neue Dateien aus Stud.IP-Kursen automatisch in einen 
 - Einheitliches `Stud.IPSync`-Branding in der Anwendung und auf der Website
 - Neue Dateien werden im Log nach Datum sortiert angezeigt
 
-## Windows-Start
+## Download und Start
 
-Die Anwendung kann direkt aus dem Quellcode gestartet werden:
+1. [Release v1.0.0 öffnen](https://github.com/wohlfahrt-florin/StudIPSync/releases/tag/v1.0.0).
+2. Unter **Assets** die Datei `StudIPSync.exe` herunterladen und starten.
+3. Bei Stud.IP anmelden, danach mit Google anmelden und den Drive-Zielordner auswählen.
 
-```powershell
-.\.venv\Scripts\python.exe .\run_app.py
-```
-
-Für eine portable Windows-Version steht der Build unter `packaging/windows/build_windows.ps1` zur Verfügung.
+Hinweis: Die EXE muss noch als Release-Asset hochgeladen werden. Bis dahin wird sie unter **Assets** nicht angezeigt.
 
 ## Hinweise
 

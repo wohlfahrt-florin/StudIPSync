@@ -40,7 +40,7 @@ def create_task_script(schedule_time, executable, script=None):
 
 
 def _run_powershell(script):
-    subprocess.run(
+    return subprocess.run(
         [
             "powershell.exe",
             "-NoProfile",
@@ -59,6 +59,17 @@ def _run_powershell(script):
 def create_daily_task(schedule_time, executable, script=None):
     """Register or replace the daily task for the current Windows user."""
     _run_powershell(create_task_script(schedule_time, executable, script))
+
+
+def daily_task_is_enabled():
+    """Return whether the daily synchronization task is enabled."""
+    task_name = _powershell_literal(TASK_NAME)
+    result = _run_powershell(
+        "$ErrorActionPreference = 'Stop'\n"
+        f"$task = Get-ScheduledTask -TaskName {task_name} -ErrorAction SilentlyContinue\n"
+        "if ($task -and $task.State -ne 'Disabled') { 'true' } else { 'false' }"
+    )
+    return result.stdout.strip().lower() == "true"
 
 
 def delete_daily_task():

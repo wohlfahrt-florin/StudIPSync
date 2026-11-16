@@ -1,6 +1,7 @@
 import unittest
+from unittest.mock import patch
 
-from studipsync.task_scheduler import create_task_script
+from studipsync.task_scheduler import create_task_script, daily_task_is_enabled
 
 
 class CreateTaskScriptTests(unittest.TestCase):
@@ -31,6 +32,21 @@ class CreateTaskScriptTests(unittest.TestCase):
     def test_rejects_invalid_time(self):
         with self.assertRaises(ValueError):
             create_task_script("25:61", "StudIPSync.exe")
+
+
+class DailyTaskStatusTests(unittest.TestCase):
+    @patch("studipsync.task_scheduler._run_powershell")
+    def test_reports_registered_task(self, run_powershell):
+        run_powershell.return_value.stdout = "true\n"
+
+        self.assertTrue(daily_task_is_enabled())
+        run_powershell.assert_called_once()
+
+    @patch("studipsync.task_scheduler._run_powershell")
+    def test_reports_missing_task(self, run_powershell):
+        run_powershell.return_value.stdout = "false\n"
+
+        self.assertFalse(daily_task_is_enabled())
 
 
 if __name__ == "__main__":

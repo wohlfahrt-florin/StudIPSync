@@ -13,12 +13,12 @@ import threading
 import customtkinter as ctk
 from dotenv import dotenv_values, set_key
 from PIL import Image
-from tkinter import messagebox
+from tkinter import BooleanVar, messagebox
 
 from .app_paths import PROJECT_DIR, bundled_credentials_path, data_dir
 from .drive_client import pick_drive_folder
 from .sync import synchronize
-from .task_scheduler import create_daily_task, delete_daily_task
+from .task_scheduler import create_daily_task, daily_task_is_enabled, delete_daily_task
 
 
 APP_NAME = "Stud.IPSync"
@@ -144,12 +144,14 @@ class StudIPSyncApp(ctk.CTk):
         self._set_window_icon()
         self.event_queue = queue.Queue()
         self.is_syncing = False
+        self.schedule_enabled = BooleanVar(value=False)
 
         ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("green")
 
         self._build_ui()
         self._load_configuration()
+        self._load_schedule_state()
         self.after_idle(self._center_window)
         if not self.username or not self.password:
             self.after_idle(self._show_initial_setup)
@@ -344,32 +346,20 @@ class StudIPSyncApp(ctk.CTk):
         )
         self.time_entry.insert(0, "08:00")
         self.time_entry.grid(row=0, column=2, sticky="w")
-        self.schedule_button = ctk.CTkButton(
+        self.schedule_toggle = ctk.CTkSwitch(
             schedule_controls,
-            text="Aktivieren",
-            width=95,
-            height=36,
-            corner_radius=9,
-            fg_color=COLORS["green_light"],
-            hover_color="#d4e5d7",
-            text_color=COLORS["green_dark"],
+            text="Deaktiviert",
+            variable=self.schedule_enabled,
+            onvalue=True,
+            offvalue=False,
+            progress_color=COLORS["green"],
+            button_color=COLORS["surface"],
+            button_hover_color=COLORS["line"],
+            text_color=COLORS["ink"],
             font=ctk.CTkFont(size=12),
-            command=self._enable_schedule,
+            command=self._toggle_schedule,
         )
-        self.schedule_button.grid(row=0, column=3, padx=(10, 0))
-        self.disable_schedule_button = ctk.CTkButton(
-            schedule_controls,
-            text="Deaktivieren",
-            width=105,
-            height=36,
-            corner_radius=9,
-            fg_color=COLORS["red_light"],
-            hover_color=COLORS["red_hover"],
-            text_color=COLORS["red"],
-            font=ctk.CTkFont(size=12),
-            command=self._disable_schedule,
-        )
-        self.disable_schedule_button.grid(row=0, column=4, padx=(6, 0))
+        self.schedule_toggle.grid(row=0, column=3, padx=(10, 0))
 
         ctk.CTkLabel(
             actions,
@@ -697,19 +687,44 @@ class StudIPSyncApp(ctk.CTk):
 
         threading.Thread(target=worker, daemon=True).start()
 
+    def _load_schedule_state(self):
+        try:
+            enabled = daily_task_is_enabled()
+        except (OSError, subprocess.CalledProcessError) as error:
+            details = (
+                getattr(error, "stderr", None)
+                or getattr(error, "stdout", None)
+                or str(error)
+            )
+            messagebox.showerror("Automatik", details, parent=self)
+            self.schedule_toggle.configure(state="disabled")
+            return
+        self._set_schedule_state(enabled)
+
+    def _set_schedule_state(self, enabled):
+        self.schedule_enabled.set(enabled)
+        self.schedule_toggle.configure(
+            text="Aktiviert" if enabled else "Deaktiviert"
+        )
+
+    def _toggle_schedule(self):
+        enabled = bool(self.schedule_enabled.get())
+        succeeded = self._enable_schedule() if enabled else self._disable_schedule()
+        self._set_schedule_state(enabled if succeeded else not enabled)
+
     def _enable_schedule(self):
         if not self.username or not self.password:
             self._show_initial_setup()
-            return
+            return False
         if self._save_settings(show_confirmation=False) is None:
-            return
+            return False
         if not self.folder_id or not self.folder_name.strip():
             messagebox.showerror(
                 "Einstellungen",
                 "Bitte zuerst einen Google-Drive-Zielordner auswählen.",
                 parent=self,
             )
-            return
+            return False
         executable, script = runtime_command()
         try:
             create_daily_task(self.time_entry.get().strip(), executable, script)
@@ -720,7 +735,7 @@ class StudIPSyncApp(ctk.CTk):
                 or str(error)
             )
             messagebox.showerror("Automatik", details, parent=self)
-            return
+            return False
         self._append_log(f"Tägliche Synchronisierung für {self.time_entry.get()} eingerichtet.")
         messagebox.showinfo(
             "Automatik aktiviert",
@@ -728,6 +743,7 @@ class StudIPSyncApp(ctk.CTk):
             "solange du in Windows angemeldet bist. Aus dem Energiesparmodus kann Windows ihn wecken.",
             parent=self,
         )
+        return True
 
     def _disable_schedule(self):
         try:
@@ -740,8 +756,9 @@ class StudIPSyncApp(ctk.CTk):
             )
             if "cannot find" not in details.lower() and "nicht finden" not in details.lower():
                 messagebox.showerror("Automatik", details, parent=self)
-                return
+                return False
         self._append_log("Tägliche Synchronisierung wurde deaktiviert.")
+        return True
 
     def _append_log(self, message):
         self.log_box.configure(state="normal")
