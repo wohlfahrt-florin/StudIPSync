@@ -1,6 +1,6 @@
 {
-  "name": "StudIPSync",
-  "short_name": "StudIPSync",
+  "name": "Stud.IPSync",
+  "short_name": "Stud.IPSync",
   "description": "Neue Kursdateien aus Stud.IP automatisch mit Google Drive synchronisieren.",
   "start_url": "/",
   "display": "standalone",
