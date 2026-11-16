@@ -123,12 +123,18 @@ class StudIPSyncApp(ctk.CTk):
         self._build_ui()
         self._load_configuration()
         self.after_idle(self._center_window)
-        self.after(100, self._show_initial_setup)
         self.after(150, self._process_events)
 
     def _center_window(self):
-        """Center the window in the usable desktop area above the taskbar."""
+        """Maximize the window, with a centered-size fallback on other platforms."""
         self.update_idletasks()
+        if sys.platform == "win32":
+            try:
+                self.state("zoomed")
+                return
+            except Exception:
+                pass
+
         width, height = 900, 560
         work_left, work_top = 0, 0
         work_right = self.winfo_screenwidth()
@@ -171,7 +177,7 @@ class StudIPSyncApp(ctk.CTk):
         self.content.grid(row=0, column=0, sticky="nsew")
         self.content.grid_columnconfigure(0, weight=1, uniform="content")
         self.content.grid_columnconfigure(1, weight=1, uniform="content")
-        self.content.grid_rowconfigure(1, weight=1)
+        self.content.grid_rowconfigure(2, weight=1)
 
         header = ctk.CTkFrame(self.content, fg_color="transparent", height=66)
         header.grid(row=0, column=0, columnspan=2, sticky="ew", padx=32, pady=(18, 12))
@@ -197,12 +203,19 @@ class StudIPSyncApp(ctk.CTk):
             font=ctk.CTkFont(size=12),
             text_color=COLORS["muted"],
         ).grid(row=1, column=1, sticky="nw")
-        ctk.CTkLabel(
+        self.account_button = ctk.CTkButton(
             header,
-            text="WINDOWS",
-            font=ctk.CTkFont(size=10, weight="bold"),
-            text_color=COLORS["muted"],
-        ).grid(row=0, column=2, rowspan=2, sticky="e")
+            text="👤",
+            width=42,
+            height=36,
+            corner_radius=10,
+            fg_color=COLORS["green_light"],
+            hover_color="#d4e5d7",
+            text_color=COLORS["green_dark"],
+            font=ctk.CTkFont(size=18),
+            command=self._show_initial_setup,
+        )
+        self.account_button.grid(row=0, column=2, rowspan=2, sticky="e")
 
         self.status_card = ctk.CTkFrame(
             self.content,
@@ -233,82 +246,10 @@ class StudIPSyncApp(ctk.CTk):
         ).grid(row=1, column=0, sticky="w", padx=22, pady=(0, 14))
         self.status_card.grid_remove()
 
-        config = ctk.CTkFrame(
-            self.content,
-            corner_radius=18,
-            fg_color=COLORS["surface"],
-            border_width=1,
-            border_color=COLORS["line"],
-        )
-        config.grid(row=1, column=0, sticky="nsew", padx=(32, 8), pady=(0, 16))
-        config.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(
-            config,
-            text="Verbindung",
-            font=ctk.CTkFont(size=18, weight="bold"),
-            text_color=COLORS["ink"],
-        ).grid(row=0, column=0, sticky="w", padx=20, pady=(17, 0))
-        ctk.CTkLabel(
-            config,
-            text="Zugangsdaten und Zielordner",
-            font=ctk.CTkFont(size=12),
-            text_color=COLORS["muted"],
-        ).grid(row=1, column=0, sticky="w", padx=20, pady=(0, 11))
-
-        self.username_entry = self._add_entry(config, 2, "Stud.IP-Kennung")
-        self.password_entry = self._add_entry(config, 4, "Stud.IP-Passwort", show="•")
-
-        ctk.CTkLabel(
-            config,
-            text="Google-Drive-Zielordner",
-            text_color=COLORS["muted"],
-            font=ctk.CTkFont(size=11, weight="bold"),
-        ).grid(row=6, column=0, sticky="w", padx=20, pady=(0, 4))
-        folder_row = ctk.CTkFrame(config, fg_color="transparent")
-        folder_row.grid(row=7, column=0, sticky="ew", padx=20, pady=(0, 9))
-        folder_row.grid_columnconfigure(0, weight=1)
-        self.folder_label = ctk.CTkLabel(
-            folder_row,
-            text="Noch kein Ordner ausgewählt",
-            text_color=COLORS["muted"],
-            anchor="w",
-            font=ctk.CTkFont(size=12),
-        )
-        self.folder_label.grid(row=0, column=0, sticky="ew")
-        self.picker_button = ctk.CTkButton(
-            folder_row,
-            text="Ordner auswählen",
-            width=118,
-            height=36,
-            corner_radius=9,
-            fg_color=COLORS["green_light"],
-            hover_color="#d4e5d7",
-            text_color=COLORS["green_dark"],
-            command=self._choose_drive_folder,
-        )
-        self.picker_button.grid(row=0, column=1, padx=(10, 0))
         self.folder_id = ""
         self.folder_name = ""
-
-        self.credentials_label = ctk.CTkLabel(
-            config,
-            text="Google-OAuth-Konfiguration wird automatisch verwendet",
-            text_color=COLORS["muted"],
-            anchor="w",
-            font=ctk.CTkFont(size=12),
-        )
-        self.credentials_label.grid(row=8, column=0, sticky="ew", padx=20, pady=(0, 9))
-        ctk.CTkButton(
-            config,
-            text="Einstellungen speichern",
-            height=42,
-            corner_radius=10,
-            fg_color=COLORS["green_light"],
-            hover_color="#d4e5d7",
-            text_color=COLORS["green_dark"],
-            font=ctk.CTkFont(size=13, weight="bold"),
-            command=self._save_settings,
-        ).grid(row=9, column=0, sticky="ew", padx=20, pady=(0, 18))
+        self.username = ""
+        self.password = ""
 
         actions = ctk.CTkFrame(
             self.content,
@@ -317,7 +258,14 @@ class StudIPSyncApp(ctk.CTk):
             border_width=1,
             border_color=COLORS["line"],
         )
-        actions.grid(row=1, column=1, sticky="nsew", padx=(8, 32), pady=(0, 16))
+        actions.grid(
+            row=2,
+            column=0,
+            columnspan=2,
+            sticky="nsew",
+            padx=32,
+            pady=(0, 16),
+        )
         actions.grid_columnconfigure(0, weight=1)
         actions.grid_rowconfigure(7, weight=1)
         ctk.CTkLabel(
@@ -439,22 +387,14 @@ class StudIPSyncApp(ctk.CTk):
     def _load_configuration(self):
         directory = data_dir()
         values = dotenv_values(directory / ".env")
-        self.username_entry.insert(0, values.get("STUDIP_USER") or "")
-        self.password_entry.insert(0, values.get("STUDIP_PASSWORD") or "")
+        self.username = values.get("STUDIP_USER") or ""
+        self.password = values.get("STUDIP_PASSWORD") or ""
         self.folder_id = (values.get("DRIVE_ROOT_FOLDER_ID") or "").strip()
         self.folder_name = (values.get("DRIVE_ROOT_FOLDER_NAME") or "").strip()
-        self.folder_label.configure(
-            text=drive_folder_label(self.folder_id, self.folder_name)
-        )
         credentials_file = directory / "credentials.json"
-        if credentials_file.is_file():
-            self.credentials_label.configure(text="Google-Zugangsdaten vorhanden")
-        else:
-            bundled_credentials = bundled_credentials_path()
-            if bundled_credentials:
-                self.credentials_label.configure(text="Google-Zugangsdaten integriert")
-            else:
-                self.credentials_label.configure(text="Google-OAuth-Konfiguration fehlt")
+        self.credentials_available = credentials_file.is_file() or bool(
+            bundled_credentials_path()
+        )
         self.needs_setup = not all(
             (
                 values.get("STUDIP_USER"),
@@ -465,12 +405,15 @@ class StudIPSyncApp(ctk.CTk):
         )
 
     def _show_initial_setup(self):
-        if not self.needs_setup:
+        if getattr(self, "setup_dialog", None) is not None and self.setup_dialog.winfo_exists():
+            self.setup_dialog.focus_force()
             return
+        if not self.needs_setup:
+            self.needs_setup = False
 
         dialog = ctk.CTkToplevel(self)
         self.setup_dialog = dialog
-        dialog.title("StudIPSync einrichten")
+        dialog.title("Konto & Verbindung")
         dialog.geometry("480x430")
         dialog.resizable(False, False)
         dialog.transient(self)
@@ -480,13 +423,13 @@ class StudIPSyncApp(ctk.CTk):
         frame.pack(fill="both", expand=True, padx=28, pady=24)
         ctk.CTkLabel(
             frame,
-            text="StudIPSync einrichten",
+            text="Konto & Verbindung",
             font=ctk.CTkFont(size=22, weight="bold"),
             text_color=COLORS["ink"],
         ).pack(anchor="w")
         ctk.CTkLabel(
             frame,
-            text="Einmal Stud.IP anmelden und einen Google-Drive-Ordner auswählen.",
+            text="Zugangsdaten und Google-Drive-Zielordner verwalten.",
             text_color=COLORS["muted"],
             justify="left",
             wraplength=420,
@@ -495,12 +438,12 @@ class StudIPSyncApp(ctk.CTk):
         ctk.CTkLabel(frame, text="Stud.IP-Kennung", anchor="w").pack(fill="x")
         self.setup_username_entry = ctk.CTkEntry(frame, height=36)
         self.setup_username_entry.pack(fill="x", pady=(3, 12))
-        self.setup_username_entry.insert(0, self.username_entry.get())
+        self.setup_username_entry.insert(0, self.username)
 
         ctk.CTkLabel(frame, text="Stud.IP-Passwort", anchor="w").pack(fill="x")
         self.setup_password_entry = ctk.CTkEntry(frame, height=36, show="•")
         self.setup_password_entry.pack(fill="x", pady=(3, 14))
-        self.setup_password_entry.insert(0, self.password_entry.get())
+        self.setup_password_entry.insert(0, self.password)
 
         self.setup_folder_id = self.folder_id
         self.setup_folder_name = self.folder_name
@@ -597,14 +540,10 @@ class StudIPSyncApp(ctk.CTk):
             messagebox.showerror("Einrichtung", str(error), parent=self.setup_dialog)
             return
 
-        self.username_entry.delete(0, "end")
-        self.username_entry.insert(0, self.setup_username_entry.get())
-        self.password_entry.delete(0, "end")
-        self.password_entry.insert(0, self.setup_password_entry.get())
+        self.username = self.setup_username_entry.get()
+        self.password = self.setup_password_entry.get()
         self.folder_id = self.setup_folder_id
         self.folder_name = self.setup_folder_name
-        self.folder_label.configure(text=drive_folder_label(self.folder_id, self.folder_name))
-        self.credentials_label.configure(text="Google-Zugangsdaten gespeichert")
         self.needs_setup = False
         self.setup_dialog.grab_release()
         self.setup_dialog.destroy()
@@ -612,8 +551,8 @@ class StudIPSyncApp(ctk.CTk):
     def _save_settings(self, show_confirmation=True):
         try:
             directory = save_configuration(
-                self.username_entry.get(),
-                self.password_entry.get(),
+                self.username,
+                self.password,
                 self.folder_id,
                 self.folder_name,
             )
@@ -621,29 +560,15 @@ class StudIPSyncApp(ctk.CTk):
             messagebox.showerror("Einstellungen", str(error), parent=self)
             return None
 
-        self.credentials_label.configure(text="Google-Zugangsdaten gespeichert")
         if show_confirmation:
             messagebox.showinfo("Einstellungen", "Einstellungen wurden gespeichert.", parent=self)
         return directory
 
-    def _choose_drive_folder(self):
-        if self._save_settings(show_confirmation=False) is None:
-            return
-        self.picker_button.configure(state="disabled", text="Browser wird geöffnet …")
-        self.status_label.configure(text="Google-Ordnerauswahl läuft …")
-
-        def worker():
-            try:
-                folder_id, folder_name = pick_drive_folder(data_dir())
-            except Exception as error:
-                self.event_queue.put(("picker_finished", None, None, str(error)))
-            else:
-                self.event_queue.put(("picker_finished", folder_id, folder_name, None))
-
-        threading.Thread(target=worker, daemon=True).start()
-
     def _start_sync(self):
         if self.is_syncing:
+            return
+        if not self.username or not self.password:
+            self._show_initial_setup()
             return
         if self._save_settings(show_confirmation=False) is None:
             return
@@ -664,6 +589,9 @@ class StudIPSyncApp(ctk.CTk):
         threading.Thread(target=worker, daemon=True).start()
 
     def _enable_schedule(self):
+        if not self.username or not self.password:
+            self._show_initial_setup()
+            return
         if self._save_settings(show_confirmation=False) is None:
             return
         if not self.folder_id or not self.folder_name.strip():
@@ -725,27 +653,6 @@ class StudIPSyncApp(ctk.CTk):
                     )
                     if not success:
                         messagebox.showerror("Synchronisierung fehlgeschlagen", message, parent=self)
-                elif isinstance(event, tuple) and event[0] == "picker_finished":
-                    _, folder_id, folder_name, error = event
-                    self.picker_button.configure(state="normal", text="Ordner auswählen")
-                    if error:
-                        self.status_label.configure(text="Ordnerauswahl fehlgeschlagen")
-                        messagebox.showerror("Google-Ordnerauswahl", error, parent=self)
-                    elif not folder_id or not folder_name or not folder_name.strip():
-                        self.status_label.configure(text="Ordnerauswahl fehlgeschlagen")
-                        messagebox.showerror(
-                            "Google-Ordnerauswahl",
-                            "Google hat keinen gültigen Ordnernamen zurückgegeben. Bitte erneut auswählen.",
-                            parent=self,
-                        )
-                    else:
-                        self.folder_id = folder_id
-                        self.folder_name = folder_name
-                        self.folder_label.configure(
-                            text=drive_folder_label(folder_id, folder_name)
-                        )
-                        if self._save_settings(show_confirmation=False) is not None:
-                            self.status_label.configure(text="Google-Ordner ausgewählt")
                 else:
                     self._append_log(event)
         except queue.Empty:
